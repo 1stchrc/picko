@@ -1,0 +1,79 @@
+<!DOCTYPE HTML>
+<html>
+    <body>
+        <script type="text/javascript">
+        function Rect(x,y,width,height){
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+        var gridList = [];
+        var gridSizeX;
+        var gridSizeY;
+        var gridScaleX;
+        var gridScaleY;
+        function SetGridListSize(x,y){
+            oldLength = gridList.length;
+            gridSizeX = x;
+            gridSizeY = y;
+            gridList.length = x*y;
+            if(oldLength < gridList.length)
+                for(i = oldLength; i < gridList.length;i++){
+                    gridList[i] = [];
+                }
+        }
+        function SetGridScale(x,y){
+            gridScaleX = x;
+            gridScaleY = y;
+        }
+        function GetGrid(x,y){
+            return gridList[x + y * gridSizeX];
+        }
+        function AddRect(rect){
+            xmin = Math.floor(rect.x/gridSizeX);
+            xmax = Math.ceil((rect.x+rect.width)/gridScaleX)
+            ymax = Math.ceil((rect.y+rect.height)/gridScaleY)
+            for(y = Math.floor(y/gridScaleY); y < ymax; y++){
+                for(x = xmin; x < xmax; x++){
+                    GetGrid(x,y).push(rect);
+                }
+            }
+        }
+        function RemoveRect(rect){
+            xmin = Math.floor(rect.x/gridSizeX);
+            xmax = Math.ceil((rect.x+rect.width)/gridScaleX)
+            ymax = Math.ceil((rect.y+rect.height)/gridScaleY)
+            for(y = Math.floor(y/gridScaleY); y < ymax; y++){
+                for(x = xmin; x < xmax; x++){
+                    set = GetGrid(x,y);
+                    set.splice(set.indexOf(rect),1);
+                }
+            }
+        }
+        function CheckRectCollision(rect){
+            array = [];
+            xmin = Math.floor(rect.x/gridSizeX);
+            xmax = Math.ceil((rect.x+rect.width)/gridScaleX)
+            ymax = Math.ceil((rect.y+rect.height)/gridScaleY)
+            for(y = Math.floor(y/gridScaleY); y < ymax; y++){
+                for(x = xmin; x < xmax; x++){
+                    GetGrid(x,y).forEach(r=>{
+                        if(array.indexOf(rect) != -1)
+                            return;
+                        if(r.x > rect.x + rect.width)
+                            return;
+                        if(rect.x < r.x + r.width)
+                            return;
+                        if(r.y > rect.y + rect.height)
+                            return;
+                        if(rect.y > r.y + r.height)
+                            return;
+                        array.push(rect);
+                    });
+                }
+            }
+        }
+        </script>
+    </body>
+</html>
