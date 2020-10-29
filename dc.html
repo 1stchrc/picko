@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<html>
+    <body onload="load()" onkeydown="down(event)" onkeyup="up(event)">
+
+        <canvas id="screen" width="1024" height="768"></canvas>
+        <br/>
+        <input type="checkbox" name="operationcheck" id="opt">
+            不选代表欧几里德空间中的旋转, 选代表闵可夫斯基空间中的旋转(当然是右手的, 按W键逆时针转, S键顺时针转, 勾选或取消会重置)
+        </input>
+        <script type="text/javascript">
+        var ovo;
+        var scr;
+        var deg = 0;
+        var ishyper = false;
+        var input = {up : false,down : false};
+        function down(event){
+            var code = event.keyCode;
+            switch(code) {
+                case 87:
+                    input.up = true;
+                    break;
+                case 83:
+                    input.down = true;
+                    break;
+            }
+        }
+        function up(event){
+            var code = event.keyCode;
+            switch(code) {
+                case 87:
+                    input.up = false;
+                    break;
+                case 83:
+                    input.down = false;
+                    break;
+            }
+        }
+        function load(){
+            ovo=document.createElement("canvas");
+            ovo.width = 2048;
+            ovo.height = 2048;
+            var dc=ovo.getContext("2d");
+            dc.translate(1024,1024);
+            dc.strokeStyle="#0060A0";
+            dc.lineWidth=1.0;
+            for(var i = -32;i < 32;i++){
+                dc.beginPath();
+                dc.moveTo(-1024, i * 32);
+                dc.lineTo(1024, i * 32);
+                dc.stroke();
+            }
+            for(var i = -32;i < 32;i++){
+                dc.beginPath();
+                dc.moveTo(i * 32, -1024);
+                dc.lineTo(i * 32, 1024);
+                dc.stroke();
+            }
+            dc.strokeStyle="#FFFFFF";
+            dc.lineWidth=2.0;
+            dc.beginPath();
+            dc.moveTo(-1024,0);
+            dc.lineTo(1024,0);
+            dc.stroke();
+            dc.beginPath();
+            dc.moveTo(0,-1024);
+            dc.lineTo(0,1024);
+            dc.stroke();
+            scr=document.getElementById("screen").getContext("2d");
+            scr.fillStyle="#000000";
+            scr.fillRect(0,0,1024,768);
+            scr.translate(512,384);
+            scr.drawImage(ovo,-1024,-1024);
+            var optcheck = document.getElementById("opt");
+            optcheck.addEventListener("change", function(event) {ishyper = this.checked; deg = 0;});
+            setInterval(update,20);
+        }
+        function update(){
+            if(input.up)
+                deg += 0.01;
+            if(input.down)
+                deg -= 0.01;
+            scr.resetTransform();
+            scr.fillRect(0,0,1024,768);
+            if(ishyper)
+                scr.setTransform(Math.cosh(deg),-Math.sinh(deg), -Math.sinh(deg), Math.cosh(deg),512,384);
+            else
+                scr.setTransform(Math.cos(deg),-Math.sin(deg), Math.sin(deg), Math.cos(deg),512,384);
+            scr.drawImage(ovo,-1024,-1024);
+        }
+        </script>
+
+    </body>
+</html>
