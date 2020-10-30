@@ -1,12 +1,13 @@
 <!DOCTYPE HTML>
 <html>
-    <body>
+    <body onkeydown="KeyDown(event)" onkeyup="KeyUp(event)" onload="OnLoad()">        
         <script type="text/javascript">
-        function Rect(x,y,width,height){
+        function Rect(x,y,width,height,obj = null){
             this.x = x;
             this.y = y;
             this.width = width;
             this.height = height;
+            this.master = obj;
         }
         var gridList = [];
         var gridSizeX;
@@ -74,6 +75,69 @@
                 }
             }
             return array;
+        }
+        </script>
+        <script>
+        var right = false;
+        var left = false;
+        var up = false;
+        var down = false;
+        var hAxis = 0;
+        var vAxis = 0;
+        var ch = new Rect(0,0,1,1);
+        function KeyDown(e){
+            switch(e.keyCode){
+                case 39:
+                    right = true;
+                    break;
+                case 37:
+                    left = true;
+                    break;
+                case 38:
+                    up = true;
+                    break;
+                case 40:
+                    down = true;
+                    break;
+            }
+        }
+        function KeyUp(e){
+            switch(e.keyCode){
+                case 39:
+                    right = true;
+                    break;
+                case 37:
+                    left = true;
+                    break;
+                case 38:
+                    up = true;
+                    break;
+                case 40:
+                    down = true;
+                    break;
+            }
+        }
+        function Update(){
+            if(up&&down)
+                hAxis = 0;
+            else if(up)
+                hAxis = 1;
+            else if (down)
+                hAxis = -1;
+            if(right&&left)
+                hAxis = 0;
+            else if(right)
+                hAxis = 1;
+            else if (left)
+                hAxis = -1;
+            CheckRectCollision(ch).forEach(rect => {
+                
+            });
+        }
+        function OnLoad(){
+            SetGridListSize(16,16);
+            SetGridScale(4,4);
+            setInterval(Update,20);
         }
         </script>
     </body>
