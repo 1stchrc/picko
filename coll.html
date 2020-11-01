@@ -61,15 +61,15 @@
                 for(var x = xmin; x < xmax; x++){
                     GetGrid(x,y).forEach(r=>{
                         if(array.indexOf(rect) != -1)
-                            continue;
+                            return;
                         if(r.x > rect.x + rect.width)
-                            continue;
+                            return;
                         if(rect.x > r.x + r.width)
-                            continue;
+                            return;
                         if(r.y > rect.y + rect.height)
-                            continue;
+                            return;
                         if(rect.y > r.y + r.height)
-                            continue;
+                            return;
                         array.push(r);
                     });
                 }
