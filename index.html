@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html>
+    <body onkeydown="KeyDown(event)" onkeyup="KeyUp(event)" onload="OnLoad()">        
+        <canvas id="screen" width="400" height="300"></canvas>
+        <script>
+        var s2p = 1/0.02;
+        var objList = [];
+        var right = false;
+        var left = false;
+        var up = false;
+        var down = false;
+        var hAxis = 0;
+        var vAxis = 0;
+        var ch = {x:0,y:0,width:1,height:1};
+        var ctx;
+        var gridLayer = new GridLayer(16,16,2,2);
+        function Object(x, y, w, h,color = "#FFFFFF"){
+            this.rect = new RectCollider(x,y,w,h,this);
+            this.color = color;
+            objList.push(this);
+        }
+        function KeyDown(e){
+            switch(e.keyCode){
+                case 39:
+                    right = true;
+                    break;
+                case 37:
+                    left = true;
+                    break;
+                case 38:
+                    up = true;
+                    break;
+                case 40:
+                    down = true;
+                    break;
+            }
+        }
+        function KeyUp(e){
+            switch(e.keyCode){
+                case 39:
+                    right = false;
+                    break;
+                case 37:
+                    left = false;
+                    break;
+                case 38:
+                    up = false;
+                    break;
+                case 40:
+                    down = false;
+                    break;
+            }
+        }
+        function Update(){
+            if(up&&down)
+                vAxis = 0;
+            else if(up)
+                vAxis = 1;
+            else if (down)
+                vAxis = -1;
+            else
+                vAxis = 0;
+            if(right&&left)
+                hAxis = 0;
+            else if(right)
+                hAxis = 1;
+            else if (left)
+                hAxis = -1;
+            else
+                hAxis = 0;
+            ch.x += hAxis * 0.02 * 2;
+            ch.y += vAxis * 0.02 * 2;
+            if(ch.x < 0)
+                ch.x = 0;
+            if(ch.y < 0)
+                ch.y = 0;
+            if(ch.x > 400 / s2p - ch.width)
+                ch.x = 400 / s2p - ch.width;
+            if(ch.y > 300 / s2p - ch.height)
+                ch.y = 300 / s2p - ch.height;
+            objList.forEach(obj => {
+                obj.color = "#FFFFFF";
+            });
+            gridLayer.overlapRect(ch.x,ch.y,ch.x + ch.width,ch.y + ch.height).forEach(rect => {
+                rect.master.color = "#FF0000";
+            });
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0,0,400,300);
+            objList.forEach(obj=>{
+                ctx.fillStyle = obj.color;
+                ctx.fillRect(obj.rect.x * s2p, 300 - obj.rect.y * s2p,obj.rect.width * s2p,-obj.rect.height * s2p);
+            });
+            ctx.fillStyle = "#00FFFF";
+            ctx.fillRect(ch.x * s2p,300 - ch.y * s2p,ch.width * s2p,-ch.height * s2p);
+        }
+        function OnLoad(){
+            ctx = document.getElementById("screen").getContext("2d");
+            gridLayer.addRect(new Object(1.4, 1.5, 0.5, 0.6).rect);
+            gridLayer.addRect(new Object(0.2, 0.8, 2, 0.5).rect);
+            gridLayer.addRect(new Object(2.5, 1.8, 1.5, 1.5).rect);
+            gridLayer.addRect(new Object(4.4, 2.7, 2.5, 0.8).rect);
+            window.setInterval(Update,20);
+        }
+        </script>
+    </body>
+</html>
