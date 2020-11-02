@@ -42,18 +42,18 @@ function GridLayer(sizeX,sizeY,scaleX,scaleY){
         var ymax = Math.ceil(b/this.scaleY)
         for(var y = Math.floor(t/this.scaleY); y < ymax; y++){
             for(var x = xmin; x < xmax; x++){
-                this.gridList[x + y * this.sizeX].forEach(r=>{
-                    if(array.indexOf(r) != -1)
+                this.gridList[x + y * this.sizeX].forEach(rect=>{
+                    if(array.indexOf(rect) != -1)
                         return;
-                    if(r.left > r)
+                    if(rect.left > r)
                         return;
-                    if(l > r.right)
+                    if(l > rect.right)
                         return;
-                    if(r.bottom > t)
+                    if(rect.bottom > t)
                         return;
-                    if(b > r.top)
+                    if(b > rect.top)
                         return;
-                    array.push(r);
+                    array.push(rect);
                 });
             }
         }
