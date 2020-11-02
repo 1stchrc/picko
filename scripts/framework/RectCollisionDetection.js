@@ -12,6 +12,9 @@ function GridLayer(sizeX,sizeY,scaleX,scaleY){
     this.scaleY = scaleY;
     this.gridList = [];
     this.gridList.length = this.sizeX*this.sizeY;
+    for(var i = 0; i < this.gridList.length; i++){
+        this.gridList[i] = [];
+    }
     this.addRect = function(rect){
         var xmin = Math.floor(rect.left/this.scaleX);
         var xmax = Math.ceil(rect.right/this.scaleX)
