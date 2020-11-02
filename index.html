@@ -16,7 +16,7 @@
         var ctx;
         var gridLayer = new GridLayer(16,16,2,2);
         function Object(x, y, w, h,color = "#FFFFFF"){
-            this.rect = new RectCollider(x,y,w,h,this);
+            this.rect = new RectCollider(x,y,x+w,y+h,this);
             this.color = color;
             objList.push(this);
         }
