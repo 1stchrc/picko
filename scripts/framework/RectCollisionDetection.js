@@ -39,8 +39,8 @@ function GridLayer(sizeX,sizeY,scaleX,scaleY){
         var array = [];
         var xmin = Math.floor(l/this.scaleX);
         var xmax = Math.ceil(r/this.scaleX)
-        var ymax = Math.ceil(b/this.scaleY)
-        for(var y = Math.floor(t/this.scaleY); y < ymax; y++){
+        var ymax = Math.ceil(t/this.scaleY)
+        for(var y = Math.floor(b/this.scaleY); y < ymax; y++){
             for(var x = xmin; x < xmax; x++){
                 this.gridList[x + y * this.sizeX].forEach(rect=>{
                     if(array.indexOf(rect) != -1)

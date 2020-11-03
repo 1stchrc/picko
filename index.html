@@ -89,7 +89,7 @@
             ctx.fillRect(0,0,400,300);
             objList.forEach(obj=>{
                 ctx.fillStyle = obj.color;
-                ctx.fillRect(obj.rect.x * s2p, 300 - obj.rect.y * s2p,obj.rect.width * s2p,-obj.rect.height * s2p);
+                ctx.fillRect(obj.rect.left * s2p, 300 - obj.rect.bottom * s2p, (obj.rect.right - obj.rect.left) * s2p,(obj.rect.bottom - obj.rect.top) * s2p);
             });
             ctx.fillStyle = "#00FFFF";
             ctx.fillRect(ch.x * s2p,300 - ch.y * s2p,ch.width * s2p,-ch.height * s2p);
