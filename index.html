@@ -2,7 +2,7 @@
 <html>
     <body onkeydown="KeyDown(event)" onkeyup="KeyUp(event)" onload="OnLoad()">        
         <canvas id="screen" width="400" height="300"></canvas>
-        <script src="./scripts/framework/RectCollisionDetection.js"></script>
+        <script src="./scripts/framework/RectOverlap.js"></script>
         <script>
         var s2p = 1/0.02;
         var objList = [];
@@ -14,9 +14,15 @@
         var vAxis = 0;
         var ch = {x:0,y:0,width:1,height:1};
         var ctx;
-        var gridLayer = new GridLayer(16,16,2,2);
+        var gridLayer = new RectOverlap.GridLayer(16,16,2,2);
+        var runninx = 0.2;
+        var runninObj;
+        var runniny = 0.2;
+        var runninObj2;
+        var runninBack = false;
+        var runninBack2 = false;
         function Object(x, y, w, h,color = "#FFFFFF"){
-            this.rect = new RectCollider(x,y,x+w,y+h,this);
+            this.rect = new RectOverlap.RectObj(x,y,x+w,y+h,this);
             this.color = color;
             objList.push(this);
         }
@@ -69,8 +75,8 @@
                 hAxis = -1;
             else
                 hAxis = 0;
-            ch.x += hAxis * 0.02 * 2;
-            ch.y += vAxis * 0.02 * 2;
+            ch.x += hAxis * 0.02 * 4;
+            ch.y += vAxis * 0.02 * 4;
             if(ch.x < 0)
                 ch.x = 0;
             if(ch.y < 0)
@@ -79,6 +85,34 @@
                 ch.x = 400 / s2p - ch.width;
             if(ch.y > 300 / s2p - ch.height)
                 ch.y = 300 / s2p - ch.height;
+            if(runninBack){
+                runninx -= 0.02 * 3;
+                if(runninx < 0.2){
+                        runninx = 0.2;
+                        runninBack = false;
+                }
+            }else{
+                runninx += 0.02 * 3;
+                if(runninx > 3){
+                        runninx = 3;
+                        runninBack = true;
+                }
+            }
+            if(runninBack2){
+                runniny -= 0.02 * 3;
+                if(runniny < 0.2){
+                        runniny = 0.2;
+                        runninBack2 = false;
+                    }
+            }else{
+                runniny += 0.02 * 3;
+                if(runniny > 3){
+                        runniny = 3;
+                        runninBack2 = true;
+                    }
+            }
+            gridLayer.updateRect(runninObj.rect,runninx,runninx+1,3.6,4.1);
+            gridLayer.updateRect(runninObj2.rect,5.6,6.2,runniny,runniny+1.2);
             objList.forEach(obj => {
                 obj.color = "#FFFFFF";
             });
@@ -100,6 +134,9 @@
             gridLayer.addRect(new Object(0.2, 0.8, 2, 0.5).rect);
             gridLayer.addRect(new Object(2.5, 1.8, 1.5, 1.5).rect);
             gridLayer.addRect(new Object(4.4, 2.7, 2.5, 0.8).rect);
+            runninObj = new Object(runninx, 1, 3.6, 0.5);
+            runninObj2 = new Object(5.6, 0.6, runniny, 1.2);
+            gridLayer.addRect(runninObj.rect);
             window.setInterval(Update,20);
         }
         </script>
