@@ -1,5 +1,5 @@
 var RectOverlap = {
-    RectObj: function (left,bottom,right,top,obj = null){
+    RectObj: function (left,bottom,right,top,obj){
         this.left = left;
         this.bottom = bottom;
         this.right = right;
