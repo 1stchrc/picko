@@ -2,7 +2,7 @@
 <html>
     <body onkeydown="KeyDown(event)" onkeyup="KeyUp(event)" onload="OnLoad()">        
         <canvas id="screen" width="400" height="300"></canvas>
-        <script src="./scripts/framework/RectOverlap.js"></script>
+        <script src="./scripts/framework/Linking.js"></script>
         <script>
         var s2p = 1/0.02;
         var objList = [];
@@ -14,18 +14,14 @@
         var vAxis = 0;
         var ch = {x:0,y:0,width:1,height:1};
         var ctx;
-        var gridLayer = new RectOverlap.GridLayer(16,16,2,2);
+        var gridLayer;
+        var Object;
         var runninx = 0.2;
         var runninObj;
         var runniny = 0.2;
         var runninObj2;
         var runninBack = false;
         var runninBack2 = false;
-        function Object(x, y, w, h,color = "#FFFFFF"){
-            this.rect = new RectOverlap.RectObj(x,y,x+w,y+h,this);
-            this.color = color;
-            objList.push(this);
-        }
         function KeyDown(e){
             switch(e.keyCode){
                 case 39:
@@ -129,7 +125,16 @@
             ctx.fillRect(ch.x * s2p,300 - ch.y * s2p,ch.width * s2p,-ch.height * s2p);
         }
         function OnLoad(){
+            linkFile("./scripts/framework/RectOverlap.js",theCallback);
             ctx = document.getElementById("screen").getContext("2d");
+        }
+        function theCallback(){
+            gridLayer = new RectOverlap.GridLayer(16,16,2,2);
+            Object = function(x, y, w, h,color = "#FFFFFF"){
+                this.rect = new RectOverlap.RectObj(x,y,x+w,y+h,this);
+                this.color = color;
+                objList.push(this);
+            }
             gridLayer.addRect(new Object(1.4, 1.5, 0.5, 0.6).rect);
             gridLayer.addRect(new Object(0.2, 0.8, 2, 0.5).rect);
             gridLayer.addRect(new Object(2.5, 1.8, 1.5, 1.5).rect);

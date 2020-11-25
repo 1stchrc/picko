@@ -1,5 +1,5 @@
 var RectOverlap = {
-    RectObj: function (left,bottom,right,top,obj){
+    RectObj: function (left,bottom,right,top,obj = null){
         this.left = left;
         this.bottom = bottom;
         this.right = right;
@@ -16,14 +16,14 @@ var RectOverlap = {
         for(var i = 0; i < this.gridList.length; i++){
             this.gridList[i] = [];
         }
-        this._pushRect = function(rect,xi,xa,yi,ya){
+        this.pushRect = function(rect,xi,xa,yi,ya){
             for(var y = yi; y < ya; y++){
                 for(var x = xi; x < xa; x++){
                     this.gridList[x + y * this.sizeX].push(rect);
                 }
             }
         }
-        this._deleteRect = function(rect,xi,xa,yi,ya){
+        this.deleteRect = function(rect,xi,xa,yi,ya){
             for(var y = yi; y < ya; y++){
                 for(var x = xi; x < xa; x++){
                     var set = this.gridList[x + y * this.sizeX];
@@ -32,10 +32,10 @@ var RectOverlap = {
             }
         }
         this.addRect = function(rect){
-            this._pushRect(rect,Math.floor(rect.left/this.scaleX),Math.ceil(rect.right/this.scaleX),Math.floor(rect.bottom/this.scaleY),Math.ceil(rect.top/this.scaleY));
+            this.pushRect(rect,Math.floor(rect.left/this.scaleX),Math.ceil(rect.right/this.scaleX),Math.floor(rect.bottom/this.scaleY),Math.ceil(rect.top/this.scaleY));
         }
         this.removeRect = function(rect){
-            this._deleteRect(rect,Math.floor(rect.left/this.scaleX),Math.ceil(rect.right/this.scaleX),Math.floor(rect.bottom/this.scaleY),Math.ceil(rect.top/this.scaleY));
+            this.deleteRect(rect,Math.floor(rect.left/this.scaleX),Math.ceil(rect.right/this.scaleX),Math.floor(rect.bottom/this.scaleY),Math.ceil(rect.top/this.scaleY));
         }
         this.overlapRect = function(l,b,r,t){
             var array = [];
@@ -71,8 +71,8 @@ var RectOverlap = {
             var ymin = Math.floor(b/this.scaleY);
             var ymax = Math.ceil(t/this.scaleY);
             if(xmin >= oldxmax || xmax <= oldxmin || ymin >= oldymax || ymax <= oldymin){
-                this._deleteRect(rect,oldxmin,oldxmax,oldymin,oldymax);
-                this._pushRect(rect,xmin,xmax,ymin,ymax);
+                this.deleteRect(rect,oldxmin,oldxmax,oldymin,oldymax);
+                this.pushRect(rect,xmin,xmax,ymin,ymax);
             } else {
                 var xminalt = xmin-oldxmin;
                 var xmaxalt = xmax-oldxmax;
@@ -81,26 +81,26 @@ var RectOverlap = {
                 var step2xmin = oldxmin;
                 var step2xmax = oldxmax;
                 if(xminalt < 0){
-                    this._pushRect(rect,xmin,oldxmin,ymin,ymax);
+                    this.pushRect(rect,xmin,oldxmin,ymin,ymax);
                 } else if (xminalt > 0){
-                    this._deleteRect(rect,oldxmin,xmin,oldymin,oldymax);
+                    this.deleteRect(rect,oldxmin,xmin,oldymin,oldymax);
                     step2xmin = xmin;
                 }
                 if(xmaxalt > 0){
-                    this._pushRect(rect,oldxmax,xmax,ymin,ymax);
+                    this.pushRect(rect,oldxmax,xmax,ymin,ymax);
                 } else if (xmaxalt < 0){
-                    this._deleteRect(rect,xmax,oldxmax,oldymin,oldymax);
+                    this.deleteRect(rect,xmax,oldxmax,oldymin,oldymax);
                     step2xmax = xmax;
                 }
                 if(yminalt < 0){
-                    this._pushRect(rect,step2xmin,step2xmax,ymin,oldymin);
+                    this.pushRect(rect,step2xmin,step2xmax,ymin,oldymin);
                 } else if(yminalt > 0){
-                    this._deleteRect(rect,step2xmin,step2xmax,oldymin,ymin);
+                    this.deleteRect(rect,step2xmin,step2xmax,oldymin,ymin);
                 }
                 if(ymaxalt > 0){
-                    this._pushRect(rect,step2xmin,step2xmax,oldymax,ymax);
+                    this.pushRect(rect,step2xmin,step2xmax,oldymax,ymax);
                 } else if(ymaxalt < 0){
-                    this._deleteRect(rect,step2xmin,step2xmax,ymax,oldymax);
+                    this.deleteRect(rect,step2xmin,step2xmax,ymax,oldymax);
                 }
             }
             rect.left=l;
