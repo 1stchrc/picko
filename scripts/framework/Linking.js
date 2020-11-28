@@ -3,7 +3,8 @@ var linkFile = {linking : function(){
     var currentCallback = null;
     _finishLink = function(){
         fileOnLinking.remove();
-        currentCallback();
+        if(currentCallback != null)
+            currentCallback();
         fileOnLinking = null;
         currentCallback = null;
     }
