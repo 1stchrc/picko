@@ -1,0 +1,326 @@
+<html><head><style>* {
+    margin: 0;
+    padding: 0;
+}
+html,
+body {
+    height: 100%;
+    width: 100%;
+}
+canvas {
+    display: block;
+}
+body{
+ 
+    overflow-x:hidden;
+  
+    overflow-y:hidden;
+  
+}</style></head>><body onload>
+    <canvas id="kinematicsCancas" width="400" height="400"></canvas>
+    <script>
+    Vector2 = function(x, y) { this.x = x; this.y = y; };
+ 
+ Vector2.prototype = {
+     copy : function() { return new Vector2(this.x, this.y); },
+     length : function() { return Math.sqrt(this.x * this.x + this.y * this.y); },
+     sqrLength : function() { return this.x * this.x + this.y * this.y; },
+     normalize : function() { var inv = 1/this.length(); return new Vector2(this.x * inv, this.y * inv); },
+     negate : function() { return new Vector2(-this.x, -this.y); },
+     add : function(v) { return new Vector2(this.x + v.x, this.y + v.y); },
+     subtract : function(v) { return new Vector2(this.x - v.x, this.y - v.y); },
+     multiply : function(f) { return new Vector2(this.x * f, this.y * f); },
+     divide : function(f) { var invf = 1/f; return new Vector2(this.x * invf, this.y * invf); },
+     dot : function(v) { return this.x * v.x + this.y * v.y; }
+ };
+  
+ Vector2.zero = new Vector2(0, 0);
+ 
+ Particle = function(position, velocity, life, color, size) {
+    this.position = position;
+    this.velocity = velocity;
+    this.acceleration = Vector2.zero;
+    this.age = 0;
+    this.life = life;
+    this.color = color;
+    this.size = size;
+};
+
+function ParticleSystem() {
+    // Private fields
+    var that = this;
+    var particles = new Array();
+ 
+    // Public fields
+    this.gravity = new Vector2(0, 100);
+    this.effectors = new Array();
+ 
+    // Public methods
+         
+    this.emit = function(particle) {
+        particles.push(particle);
+    };
+ 
+    this.simulate = function(dt) {
+        aging(dt);
+        applyGravity();
+        applyEffectors();
+        kinematics(dt);
+    };
+ 
+    // Private methods
+    
+    function applyEffectors(){
+        for(var i = 0; i < particles.length; i++){
+            for(var j = 0; j < that.effectors.length; j++){
+                that.effectors[j].apply(particles[i]);
+            }
+        }
+    }
+
+    function aging(dt) {
+        for (var i = 0; i < particles.length; ) {
+            var p = particles[i];
+            p.age += dt;
+            if (p.age >= p.life)
+                kill(i);
+            else
+                i++;
+        }
+    }
+ 
+    function kill(index) {
+        if (particles.length > 1)
+            particles[index] = particles[particles.length - 1];
+        particles.pop();
+    }
+
+    function applyGravity() {
+        for (var i in particles)
+            particles[i].acceleration = that.gravity;
+    }
+ 
+    function kinematics(dt) {
+        for (var i in particles) {
+            var p = particles[i];
+            p.position = p.position.add(p.velocity.multiply(dt));
+            p.velocity = p.velocity.add(p.acceleration.multiply(dt));
+        }
+    }
+
+    this.render = function(ctx) {
+        for (var i in particles) {
+            var p = particles[i];
+            var alpha = 1 - p.age / p.life;
+            ctx.fillStyle = "rgba("
+                + Math.floor(p.color.r * 255) + ","
+                + Math.floor(p.color.g * 255) + ","
+                + Math.floor(p.color.b * 255) + ","
+                + alpha.toFixed(2) + ")";
+            ctx.beginPath();
+            ctx.arc(p.position.x, p.position.y, p.size, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fill();
+        }
+    }
+    // ...
+}
+
+function ChamberBox(x1, y1, x2, y2) {
+    this.apply = function(particle) {
+        if (particle.position.x - particle.size < x1 || particle.position.x + particle.size > x2)
+            particle.velocity.x = -particle.velocity.x;
+ 
+        if (particle.position.y - particle.size < y1 || particle.position.y + particle.size > y2)
+            particle.velocity.y = -particle.velocity.y;
+    };
+}
+
+function Color(r,g,b){
+    this.r = r;
+    this.g = g;
+    this.b = b;
+}
+
+Color.prototype = {
+    copy : function() { return new Color(this.r, this.g, this.b); },
+    add : function(c) { return new Color(this.r + c.r, this.g + c.g, this.b + c.b); },
+    multiply : function(s) { return new Color(this.r * s, this.g * s, this.b * s); },
+    modulate : function(c) { return new Color(this.r * c.r, this.g * c.g, this.b * c.b); }
+};
+
+Color.black = new Color(0, 0, 0);
+Color.white = new Color(1, 1, 1);
+Color.red = new Color(1, 0, 0);
+Color.yellow = new Color(1, 1, 0);
+Color.green = new Color(0, 1, 0);
+Color.blue = new Color(0, 0, 1);
+Color.purple = new Color(0.5,0,1);
+
+function Message(msg,param){
+    this.msg = msg;
+    this.param = param;
+}
+
+Message.mousedown = 1;
+Message.mousemove = 2;
+Message.mouseup = 3;
+Message.touchstart = 4;
+Message.touchmove = 5;
+Message.touchend = 6;
+
+function EmitPoint(id,pos){
+    this.id = id;
+    this.oldPos = pos;
+    this.newPos = pos;
+}
+
+var canvas = document.getElementById("kinematicsCancas");
+var out = document.getElementById("out");
+var touch_ = document.getElementById("touch");
+var ctx = canvas.getContext("2d");
+var msgQueue = new Array(128);
+var backPtr = 0;
+var frontPtr = 0;
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+function pushMsg(msg){
+    msgQueue[backPtr] = msg;
+    backPtr = backPtr == 127 ? 0 : backPtr + 1;
+}
+
+function peekMsg(){
+    return msgQueue[frontPtr];
+}
+
+function popMsg(){
+    var ret = msgQueue[frontPtr];
+    msgQueue[frontPtr] = undefined;
+    frontPtr = frontPtr == 127 ? 0 : frontPtr + 1;
+    return ret;
+}
+
+var ps = new ParticleSystem();
+ps.effectors.push(new ChamberBox(0, 0, canvas.width, canvas.height));
+var dt = 0.01;
+
+var emitPoints = [];
+
+function sampleDirection(angle1, angle2) {
+    var t = Math.random();
+    var theta = angle1 * t + angle2 * (1 - t);
+    return new Vector2(Math.cos(theta), Math.sin(theta));
+}
+
+function sampleColor(color1, color2) {
+    var t = Math.random();
+    return color1.multiply(t).add(color2.multiply(1 - t));
+}
+
+function sampleNumber(value1, value2) {
+    var t = Math.random();
+    return value1 * t + value2 * (1 - t);
+}
+
+
+function step() {
+    while(peekMsg() != undefined){
+        message = popMsg();
+        switch(message.msg){
+            case Message.mousedown:
+                emitPoints.push(new EmitPoint(undefined,message.param));
+                break;
+            case Message.mousemove:
+                console.log(emitPoints[0]);
+                var ptr = emitPoints.findIndex((p)=>{return p.id == undefined;});
+                console.log(ptr);
+                if(ptr != -1)
+                    emitPoints[ptr].newPos = message.param;
+                break;
+            case Message.mouseup:
+                var ptr = emitPoints.findIndex((p)=>{return p.id == undefined;});
+                emitPoints[ptr] = emitPoints[emitPoints.length - 1];
+                emitPoints.length--;
+                break;
+            case Message.touchstart:
+                emitPoints.push(new EmitPoint(message.param.id,message.param.pos));
+                break;
+            case Message.touchmove:
+                var ptr = emitPoints.findIndex((p)=>{return p.id == message.param.id;});//So it can't be compared with ==?
+                if(ptr != -1)
+                    emitPoints[ptr].newPos = message.param.pos;
+                break;
+            case Message.touchend:
+                var ptr = emitPoints.findIndex((p)=>{return p.id == message.param.id;});
+                emitPoints[ptr] = emitPoints[emitPoints.length - 1];
+                emitPoints.length--;
+                break;
+        }
+    }
+    for(var i = 0; i < emitPoints.length; i++){
+        p = emitPoints[i];
+        var velocity = p.newPos.subtract(p.oldPos).multiply(10);
+        velocity = velocity.add(sampleDirection(0, Math.PI * 2).multiply(20));    
+        var color = sampleColor(Color.red, Color.yellow);
+        var life = sampleNumber(1, 2);    
+        var size = sampleNumber(2, 4);
+        if(p.newPos.x < canvas.width && p.newPos.x > -1 && p.newPos.y < canvas.height && p.newPos.y > -1)
+            ps.emit(new Particle(p.newPos, velocity, life, color, size));
+        p.oldPos = p.newPos;
+    }
+    ps.simulate(dt);
+
+    ctx.fillStyle="rgba(0, 0, 0, 0.1)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ps.render(ctx);
+}
+
+var up = true;
+
+canvas.onmousedown = function(e) {
+    if (e.layerX || e.layerX == 0) { // Firefox 
+        e.target.style.position='relative';
+        pushMsg(new Message(Message.mousedown, new Vector2(e.layerX, e.layerY)));
+    }
+    else
+    pushMsg(new Message(Message.mousedown, new Vector2(e.offsetX, e.offsetY)));
+};
+canvas.onmousemove = function(e) {
+    if (e.layerX || e.layerX == 0) { // Firefox 
+        e.target.style.position='relative';
+        pushMsg(new Message(Message.mousemove, new Vector2(e.layerX, e.layerY)));
+    }
+    else
+    pushMsg(new Message(Message.mousemove, new Vector2(e.offsetX, e.offsetY)));
+};
+canvas.onmouseup = function(e){
+    pushMsg(new Message(Message.mouseup, null));
+};
+
+canvas.ontouchmove = function(e){
+    e.preventDefault();
+    var touches = e.changedTouches;
+    for(touch of touches){
+        pushMsg(new Message(Message.touchmove, {id: touch.identifier, pos: new Vector2(touch.pageX,touch.pageY)}));
+    }
+};
+canvas.ontouchstart = function(e){
+    e.preventDefault();
+    var touches = e.changedTouches;
+    for(touch of touches){
+        pushMsg(new Message(Message.touchstart, {id: touch.identifier, pos: new Vector2(touch.pageX,touch.pageY)}));
+    }
+};
+canvas.ontouchend = function(e){
+    e.preventDefault();
+    var touches = e.changedTouches;
+    for(touch of touches){
+        pushMsg(new Message(Message.touchend, {id: touch.identifier}));
+    }
+};
+
+setInterval(step, dt*1000);
+</script>
+</body></html>
