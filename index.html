@@ -71,42 +71,45 @@
                 hAxis = -1;
             else
                 hAxis = 0;
-            ch.x += hAxis * 0.02 * 4;
-            ch.y += vAxis * 0.02 * 4;
-            if(ch.x < 0)
-                ch.x = 0;
-            if(ch.y < 0)
-                ch.y = 0;
-            if(ch.x > 400 / s2p - ch.width)
-                ch.x = 400 / s2p - ch.width;
-            if(ch.y > 300 / s2p - ch.height)
-                ch.y = 300 / s2p - ch.height;
-            if(runninBack){
-                runninx -= 0.02 * 3;
-                if(runninx < 0.2){
-                        runninx = 0.2;
-                        runninBack = false;
+            if(Updating.deltaTime >= 0 || Updating.deltaTime < 0){
+                    ch.x += hAxis * Updating.deltaTime * 4;
+                    ch.y += vAxis * Updating.deltaTime * 4;
+                    if(ch.x < 0)
+                    ch.x = 0;
+                if(ch.y < 0)
+                    ch.y = 0;
+                if(ch.x > 400 / s2p - ch.width)
+                    ch.x = 400 / s2p - ch.width;
+                if(ch.y > 300 / s2p - ch.height)
+                    ch.y = 300 / s2p - ch.height;
+                if(runninBack){
+                    runninx -= Updating.deltaTime * 3;
+                    if(runninx < 0.2){
+                            runninx = 0.2;
+                            runninBack = false;
+                    }
+                }else{
+                    runninx += Updating.deltaTime * 3;
+                    if(runninx > 3){
+                            runninx = 3;
+                            runninBack = true;
+                    }
                 }
-            }else{
-                runninx += 0.02 * 3;
-                if(runninx > 3){
-                        runninx = 3;
-                        runninBack = true;
+                if(runninBack2){
+                    runniny -= Updating.deltaTime * 3;
+                    if(runniny < 0.2){
+                            runniny = 0.2;
+                            runninBack2 = false;
+                        }
+                }else{
+                    runniny += Updating.deltaTime * 3;
+                    if(runniny > 3){
+                            runniny = 3;
+                            runninBack2 = true;
+                        }
                 }
             }
-            if(runninBack2){
-                runniny -= 0.02 * 3;
-                if(runniny < 0.2){
-                        runniny = 0.2;
-                        runninBack2 = false;
-                    }
-            }else{
-                runniny += 0.02 * 3;
-                if(runniny > 3){
-                        runniny = 3;
-                        runninBack2 = true;
-                    }
-            }
+            
             gridLayer.updateRect(runninObj.rect,runninx,runninx+1,3.6,4.1);
             gridLayer.updateRect(runninObj2.rect,5.6,6.2,runniny,runniny+1.2);
             objList.forEach(obj => {
@@ -125,8 +128,15 @@
             ctx.fillRect(ch.x * s2p,300 - ch.y * s2p,ch.width * s2p,-ch.height * s2p);
         }
         function OnLoad(){
-            linkFile("./scripts/framework/RectOverlap.js",theCallback);
             ctx = document.getElementById("screen").getContext("2d");
+            linkFile("./scripts/framework/RectOverlap.js",theCallback);
+        }
+        var oldtimestamp = 0;
+        function draw(timestamp){
+            var dt = timestamp - oldtimestamp;
+            oldtimestamp = timestamp;
+            Updating.renderFrame(dt);
+            requestAnimationFrame(draw);
         }
         function theCallback(){
             gridLayer = new RectOverlap.GridLayer(16,16,2,2);
@@ -142,8 +152,14 @@
             runninObj = new Object(runninx, 1, 3.6, 0.5);
             runninObj2 = new Object(5.6, 0.6, runniny, 1.2);
             gridLayer.addRect(runninObj.rect);
-            window.setInterval(Update,20);
+            gridLayer.addRect(runninObj2.rect);
+            linkFile("./scripts/framework/Updating.js", function(){
+                console.log("lnk");
+                Updating.startRenderRoutine("upd",0,Update);
+                draw();
+            });
         }
+
         </script>
     </body>
 </html>
