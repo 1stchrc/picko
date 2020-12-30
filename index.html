@@ -71,61 +71,62 @@
                 hAxis = -1;
             else
                 hAxis = 0;
-            if(Updating.deltaTime >= 0 || Updating.deltaTime < 0){
-                    ch.x += hAxis * Updating.deltaTime * 4;
-                    ch.y += vAxis * Updating.deltaTime * 4;
-                    if(ch.x < 0)
-                    ch.x = 0;
-                if(ch.y < 0)
-                    ch.y = 0;
-                if(ch.x > 400 / s2p - ch.width)
-                    ch.x = 400 / s2p - ch.width;
-                if(ch.y > 300 / s2p - ch.height)
-                    ch.y = 300 / s2p - ch.height;
-                if(runninBack){
-                    runninx -= Updating.deltaTime * 3;
-                    if(runninx < 0.2){
-                            runninx = 0.2;
-                            runninBack = false;
-                    }
-                }else{
-                    runninx += Updating.deltaTime * 3;
-                    if(runninx > 3){
-                            runninx = 3;
-                            runninBack = true;
-                    }
+            ch.x += hAxis * 0.02 * 4;
+            ch.y += vAxis * 0.02 * 4;
+            if(ch.x < 0)
+                ch.x = 0;
+            if(ch.y < 0)
+                ch.y = 0;
+            if(ch.x > 400 / s2p - ch.width)
+                ch.x = 400 / s2p - ch.width;
+            if(ch.y > 300 / s2p - ch.height)
+                ch.y = 300 / s2p - ch.height;
+            if(runninBack){
+                runninx -= 0.02 * 3;
+                if(runninx < 0.2){
+                        runninx = 0.2;
+                        runninBack = false;
                 }
-                if(runninBack2){
-                    runniny -= Updating.deltaTime * 3;
-                    if(runniny < 0.2){
-                            runniny = 0.2;
-                            runninBack2 = false;
-                        }
-                }else{
-                    runniny += Updating.deltaTime * 3;
-                    if(runniny > 3){
-                            runniny = 3;
-                            runninBack2 = true;
-                        }
+            }else{
+                runninx += 0.02 * 3;
+                if(runninx > 3){
+                        runninx = 3;
+                        runninBack = true;
                 }
             }
+            if(runninBack2){
+                runniny -= 0.02 * 3;
+                if(runniny < 0.2){
+                        runniny = 0.2;
+                        runninBack2 = false;
+                    }
+            }else{
+                runniny += 0.02 * 3;
+                if(runniny > 3){
+                        runniny = 3;
+                        runninBack2 = true;
+                    }
+            }
+        
             
-            gridLayer.updateRect(runninObj.rect,runninx,runninx+1,3.6,4.1);
-            gridLayer.updateRect(runninObj2.rect,5.6,6.2,runniny,runniny+1.2);
+            gridLayer.updateRect(runninObj.rect,runninx,runninx+1,3.6,4);
+            gridLayer.updateRect(runninObj2.rect,5.6,6.2,runniny,runniny+1.2);            
+        }
+        function Render(){
             objList.forEach(obj => {
                 obj.color = "#FFFFFF";
             });
-            gridLayer.overlapRect(ch.x,ch.y,ch.x + ch.width,ch.y + ch.height).forEach(rect => {
+            gridLayer.overlapRect(ch.x,ch.y, ch.x + ch.width,ch.y + ch.height).forEach(rect => {
                 rect.obj.color = "#FF0000";
             });
             ctx.fillStyle = "#000000";
             ctx.fillRect(0,0,400,300);
             objList.forEach(obj=>{
                 ctx.fillStyle = obj.color;
-                ctx.fillRect(obj.rect.left * s2p, 300 - obj.rect.bottom * s2p, (obj.rect.right - obj.rect.left) * s2p,(obj.rect.bottom - obj.rect.top) * s2p);
+                ctx.fillRect(obj.rect.left * s2p, 300 - obj.rect.bottom * s2p, (obj.rect.right - obj.rect.left) * s2p ,(obj.rect.bottom - obj.rect.top) * s2p);
             });
             ctx.fillStyle = "#00FFFF";
-            ctx.fillRect(ch.x * s2p,300 - ch.y * s2p,ch.width * s2p,-ch.height * s2p);
+            ctx.fillRect(ch.x * s2p ,300 -ch.y  * s2p,ch.width * s2p,-ch.height * s2p);
         }
         function OnLoad(){
             ctx = document.getElementById("screen").getContext("2d");
@@ -133,9 +134,7 @@
         }
         var oldtimestamp = 0;
         function draw(timestamp){
-            var dt = timestamp - oldtimestamp;
-            oldtimestamp = timestamp;
-            Updating.renderFrame(dt);
+            Updating.renderFrame(timestamp);
             requestAnimationFrame(draw);
         }
         function theCallback(){
@@ -145,18 +144,19 @@
                 this.color = color;
                 objList.push(this);
             }
-            gridLayer.addRect(new Object(1.4, 1.5, 0.5, 0.6).rect);
-            gridLayer.addRect(new Object(0.2, 0.8, 2, 0.5).rect);
-            gridLayer.addRect(new Object(2.5, 1.8, 1.5, 1.5).rect);
-            gridLayer.addRect(new Object(4.4, 2.7, 2.5, 0.8).rect);
+            gridLayer.addRect(new Object(1.4, 2.4, 0.6, 0.4).rect);
+            gridLayer.addRect(new Object(0.2, 0.8, 2, 0.6).rect);
+            gridLayer.addRect(new Object(2.4, 1.8, 1.6, 1.6).rect);
+            gridLayer.addRect(new Object(4.4, 2.8, 2.4, 0.8).rect);
             runninObj = new Object(runninx, 1, 3.6, 0.5);
             runninObj2 = new Object(5.6, 0.6, runniny, 1.2);
             gridLayer.addRect(runninObj.rect);
             gridLayer.addRect(runninObj2.rect);
             linkFile("./scripts/framework/Updating.js", function(){
-                console.log("lnk");
-                Updating.startRenderRoutine("upd",0,Update);
-                draw();
+                Updating.startRenderRoutine("rdr",0, Render);
+                Updating.startFixedRoutine("upd", 0, Update);
+                draw(0);
+                Updating.fixedUpdatePaused = false;
             });
         }
 
