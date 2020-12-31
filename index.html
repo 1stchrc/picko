@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-    <body onkeydown="KeyDown(event)" onkeyup="KeyUp(event)" onload="OnLoad()">        
+    <body>
         <canvas id="screen" width="400" height="300"></canvas>
         <script src="./scripts/framework/Linking.js"></script>
         <script>
@@ -22,7 +22,8 @@
         var runninObj2;
         var runninBack = false;
         var runninBack2 = false;
-        function KeyDown(e){
+
+        document.addEventListener("keydown", e => {
             switch(e.keyCode){
                 case 39:
                     right = true;
@@ -37,8 +38,8 @@
                     down = true;
                     break;
             }
-        }
-        function KeyUp(e){
+        });
+        document.addEventListener("keyup", e => {
             switch(e.keyCode){
                 case 39:
                     right = false;
@@ -53,7 +54,7 @@
                     down = false;
                     break;
             }
-        }
+        });
         function Update(){
             if(up&&down)
                 vAxis = 0;
@@ -128,11 +129,10 @@
             ctx.fillStyle = "#00FFFF";
             ctx.fillRect(ch.x * s2p ,300 -ch.y  * s2p,ch.width * s2p,-ch.height * s2p);
         }
-        function OnLoad(){
+        document.body.addEventListener("load", () => {
             ctx = document.getElementById("screen").getContext("2d");
-            linkFile("./scripts/framework/RectOverlap.js",theCallback);
-        }
-        var oldtimestamp = 0;
+            linkFile("./scripts/framework/RectOverlap.js").then(theCallback);
+        })
         function draw(timestamp){
             Updating.renderFrame(timestamp);
             requestAnimationFrame(draw);
@@ -152,7 +152,7 @@
             runninObj2 = new Object(5.6, 0.6, runniny, 1.2);
             gridLayer.addRect(runninObj.rect);
             gridLayer.addRect(runninObj2.rect);
-            linkFile("./scripts/framework/Updating.js", function(){
+            linkFile("./scripts/framework/Updating.js").then(() => {
                 Updating.startRenderRoutine("rdr",0, Render);
                 Updating.startFixedRoutine("upd", 0, Update);
                 draw(0);
