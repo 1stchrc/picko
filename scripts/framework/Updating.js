@@ -10,53 +10,38 @@ function Msg(){
     this.param = undefined;
 }
 
-Msg.null = 0;
+Msg.NULL = 0;
 
 //Since js is single-threaded so no need to consider thread safty stuff.
-var Updating = {
+var Updating = function(){
 
-    renderFrame : null,
-    startRenderRoutine : null,
-    startLateRenderRoutine : null,
-    stopRenderRoutine : null,
-    stopLateRenderRoutine : null,
-    postMessage : null,
+    function Routine(name, func){
+        this.name = name;
+        this.func = func;
+    }
 
-    startFixedRoutine : null,
-    stopFixedRoutine : null,
-    fixedUpdatePaused : true,
+    var renderRoutines = [];
+    var renderMsgQueue = new Misc.StructArray(Msg);
+    var lateRenderRoutines = [];
+    var renderRefreshFlag = false;
+    var loopIndex = 0;
 
-    setHook : null,
-    dettachHook : null,
+    var fixedRoutines = [];
 
-    startFixedUpdate : null,
-    frameDropThreshold : 5,
-    stopFixedUpdate : function(){
-        function Routine(name, func){
-            this.name = name;
-            this.func = func;
-        }
+    var fixedDeltaTime = 20;
 
-        var renderRoutines = [];
-        var renderMsgQueue = new Misc.ObjPool(Msg);
-        var lateRenderRoutines = [];
-        var renderRefreshFlag = false;
-        var loopIndex = 0;
+    var renderHooks = [];
 
-        var fixedRoutines = [];
+    function fixedUpdate(){
+        Time.fixedTimestamp = loopIndex * fixedDeltaTime;
 
-        var fixedDeltaTime = 20;
+        fixedRoutines.forEach(function(route){route.func();});
+    }
 
-        var renderHooks = [];
-        var fixedHooks = [];
-
-        var fixedUpdate = function(){
-            Time.fixedTimestamp = loopIndex * fixedDeltaTime;
-
-            fixedRoutines.forEach(function(route){route.func();});
-        }
-        Updating.renderFrame = function(timestamp){
-
+    Updating = {
+        
+        renderFrame : function(timestamp){
+    
             Time.deltaTime = timestamp - Time.renderTimestamp;
             Time.renderTimestamp = timestamp;
 
@@ -64,7 +49,10 @@ var Updating = {
                 var msg = renderMsgQueue.space[i].msg;
                 var param = renderMsgQueue.space[i].param;
                 renderHooks.forEach(function(hook){hook(msg, param);});
+                msg = Msg.NULL;
+                param = undefined;
             }
+
             renderMsgQueue.ptr = 0;
             if(renderRefreshFlag){
                 renderMsgQueue.space.length = 0;
@@ -88,58 +76,60 @@ var Updating = {
                 }
 
             lateRenderRoutines.forEach(function(route){route.func();});            
-        };
-        
-        Updating.setHook = function(hook){renderHooks.push(hook)};
-        Updating.dettachHook = function(hook){
-            renderHooks[renderHooks.indexOf(hook)] = renderHooks[renderHooks.length - 1];
-            renderHooks.length--;
-        };
+        },
 
-        Updating.startRenderRoutine = function(name, priority, func){
+        startRenderRoutine : function(name, priority, func){
             var idx = renderRoutines.findIndex(function(el){return el.priority > priority});
             if(idx != -1)
                 renderRoutines.splice(idx, 0, new Routine(name, func));
             else
                 renderRoutines.push(new Routine(name, func));
-        };
-
-        Updating.startLateRenderRoutine = function(name, priority, func){
+        },
+        startLateRenderRoutine : function(name, priority, func){
             var idx = renderRoutines.findIndex(function(el){return el.priority > priority});
             if(idx != -1)
                 lateRenderRoutines.splice(idx, 0, new Routine(name, func));
             else
                 lateRenderRoutines.push(new Routine(name, func));
-        };
-
-        Updating.stopRenderRoutine = function(name){
+        },
+        stopRenderRoutine : function(name){
             renderRoutines.splice(renderRoutines.findIndex(function(el){return el.name == name;}), 1);
-        };
-
-        Updating.stopLateRenderRoutine = function(name){
+        },
+        stopLateRenderRoutine : function(name){
             lateRenderRoutines.splice(lateRenderRoutines.findIndex(function(el){return el.name == name;}), 1);
-        };
-
-        Updating.postMessage = function(msgid, param){
-            var msg = renderMsgQueue.get();
+        },
+        postMessage : function(msgid, param){
+            var msg = renderMsgQueue.alloc();
             msg.msg = msgid;
             msg.param = param;
-        };
-
-        Updating.startFixedRoutine = function(name, priority, func){
+        },
+    
+        startFixedRoutine : function(name, priority, func){
             var idx = fixedRoutines.findIndex(function(el){return el.priority > priority});
             if(idx != -1)
                 fixedRoutines.splice(idx, 0, new Routine(name, func));
             else 
                 fixedRoutines.push(new Routine(name, func));
-        };
+        },
 
-        Updating.stopFixedRoutine = function(name){
+        stopFixedRoutine : function(name){
             fixedRoutines.splice(fixedRoutines.findIndex(function(el){return el.name == name;}), 1);
-        };
+        },
+    
+        setHook : function(hook){
+            renderHooks.push(hook);
+        },
 
-        Time.getFixedDeltaTime = function(){return fixedDeltaTime};
+        dettachHook : function(hook){
+            renderHooks[renderHooks.indexOf(hook)] = renderHooks[renderHooks.length - 1];
+            renderHooks.length--;
+        },
         
-    }
-};
-Updating.stopFixedUpdate();
+        fixedUpdatePaused : true,
+
+        frameDropThreshold : 5,
+    };
+
+    Time.getFixedDeltaTime = function(){return fixedDeltaTime};
+}
+Updating();

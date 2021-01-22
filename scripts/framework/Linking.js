@@ -6,5 +6,6 @@ function linkFile(filePath){
         node.addEventListener("load", () => {
             node.remove();
             resolve();
-        }));
+        })
+    );
 }
