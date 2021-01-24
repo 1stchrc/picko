@@ -6,13 +6,10 @@
         <script>
         var s2p = 1/0.02;
         var objList = [];
-        var right = false;
-        var left = false;
-        var up = false;
-        var down = false;
         var hAxis = 0;
         var vAxis = 0;
         var ch = {x:0,y:0,width:1,height:1};
+        var mch = {x:0,y:0,width:0.2,height:0.2};
         var ctx;
         var gridLayer;
         var Object;
@@ -22,11 +19,12 @@
         var runninObj2;
         var runninBack = false;
         var runninBack2 = false;
+        var mousePos;
         function Update(){
-            up = Input.getButton("up");
-            down = Input.getButton("down");
-            left = Input.getButton("left");
-            right = Input.getButton("right");
+            var up = Input.getButton("up");
+            var down = Input.getButton("down");
+            var left = Input.getButton("left");
+            var right = Input.getButton("right");
             if(up&&down)
                 vAxis = 0;
             else if(up)
@@ -90,8 +88,25 @@
             gridLayer.overlapRect(ch.x,ch.y, ch.x + ch.width,ch.y + ch.height,rect => {
                 rect.obj.color = "#FF0000";
             });
+
+            gridLayer.overlapRect(mch.x,mch.y, mch.x + mch.width,mch.y + mch.height,rect => {
+                rect.obj.color = "#FF0000";
+            });
         }
         function Render(){
+            mousePos = Input.getMousePos();
+            mch.x = mousePos.x * 400 / s2p - 0.1;
+            mch.y = mousePos.y * 300 / s2p - 0.1;
+            if(mch.x < 0)
+                mch.x = 0;
+            if(mch.y < 0)
+                mch.y = 0;
+            if(mch.x > 400 / s2p - mch.width)
+                mch.x = 400 / s2p - mch.width;
+            if(mch.y > 300 / s2p - mch.height)
+                mch.y = 300 / s2p - mch.height;
+        }
+        function LateRender(){
             ctx.fillStyle = "#000000";
             ctx.fillRect(0,0,400,300);
             objList.forEach(obj=>{
@@ -100,12 +115,14 @@
             });
             ctx.fillStyle = "#00FFFF";
             ctx.fillRect(ch.x * s2p ,300 -ch.y  * s2p,ch.width * s2p,-ch.height * s2p);
+            ctx.fillStyle = Input.getMouseButton(0) ? "#FF00FF" : "#FFFF00";
+            ctx.fillRect(mch.x * s2p ,300 -mch.y  * s2p,mch.width * s2p,-mch.height * s2p);
         }
         function OnLoad(){
             ctx = document.getElementById("screen").getContext("2d");
             linkFile("./scripts/framework/Misc.js")
             .then(()=>linkFile("./scripts/framework/Global.js"))
-            .then(()=>linkFile("./scripts/framework/RectOverlap.js"))
+            .then(()=>{Global.onscreenCanvas = document.getElementById("screen"); return linkFile("./scripts/framework/RectOverlap.js")})
             .then(() => linkFile("./scripts/framework/Updating.js"))
             .then(()=>linkFile("./scripts/framework/Input.js")).then(()=>{
                 gridLayer = new RectOverlap.GridLayer(16,16,2,2);
@@ -127,6 +144,7 @@
                 Input.registerButton("left", "ArrowLeft");
                 Input.registerButton("right", "ArrowRight");
                 Updating.startRenderRoutine("rdr",0, Render);
+                Updating.startLateRenderRoutine("lrdr",0, LateRender);
                 Updating.startFixedRoutine("upd", 0, Update);
                 draw(0);
                 Updating.fixedUpdatePaused = false;

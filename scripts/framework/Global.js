@@ -1,4 +1,4 @@
 var Global = {
-    onScreenCanvas : null,
-    onScreenCanvasContext : null
+    onscreenCanvas : null,
+    onscreenCanvasContext : null
 };

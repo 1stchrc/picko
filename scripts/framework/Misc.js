@@ -22,11 +22,6 @@ Misc.StructArray.prototype = {
     reset : function(){
         this.space = [];
         this.ptr = 0;
-    },
-    clear : function(){
-        for(var i = 0; i < this.ptr; i++){
-            this.space[i] = null;
-        }
     }
 }
 
