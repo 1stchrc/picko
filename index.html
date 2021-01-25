@@ -27,11 +27,14 @@
         var runninBack = false;
         var runninBack2 = false;
         var mousePos;
+        var sup = null;
+        var sdown = null;
+        var mouseButton = null;
         function Update(){
-            var up = Input.getButton("up");
-            var down = Input.getButton("down");
-            var left = Input.getButton("left");
-            var right = Input.getButton("right");
+            up = sup.pressed;
+            down = sdown.pressed;
+            left = Input.getButton("left").pressed;
+            right = Input.getButton("right").pressed;
             if(up&&down)
                 vAxis = 0;
             else if(up)
@@ -101,7 +104,6 @@
             });
         }
         function Render(){
-            mousePos = Input.getMousePos();
             mch.x = mousePos.x * 400 / s2p - 0.1;
             mch.y = mousePos.y * 300 / s2p - 0.1;
             if(mch.x < 0)
@@ -122,7 +124,7 @@
             });
             ctx.fillStyle = "#00FFFF";
             ctx.fillRect(ch.x * s2p ,300 -ch.y  * s2p,ch.width * s2p,-ch.height * s2p);
-            ctx.fillStyle = Input.getMouseButton(0) ? "#FF00FF" : "#FFFF00";
+            ctx.fillStyle = mouseButton.pressed ? "#FF00FF" : "#FFFF00";
             ctx.fillRect(mch.x * s2p ,300 -mch.y  * s2p,mch.width * s2p,-mch.height * s2p);
         }
         function OnLoad(){
@@ -146,10 +148,12 @@
                 runninObj2 = new Object(5.6, 0.6, runniny, 1.2);
                 gridLayer.addRect(runninObj.rect);
                 gridLayer.addRect(runninObj2.rect);
-                Input.registerButton("up", "ArrowUp");
-                Input.registerButton("down", "ArrowDown");
+                sup = Input.registerButton("up", "ArrowUp");
+                sdown = Input.registerButton("down", "ArrowDown");
                 Input.registerButton("left", "ArrowLeft");
                 Input.registerButton("right", "ArrowRight");
+                mousePos = Input.getMousePos();
+                mouseButton = Input.getMouseButton(0);
                 Updating.startRenderRoutine("rdr",0, Render);
                 Updating.startLateRenderRoutine("lrdr",0, LateRender);
                 Updating.startFixedRoutine("upd", 0, Update);
