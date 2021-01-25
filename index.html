@@ -163,7 +163,11 @@
             });      
         }
         function draw(timestamp){
+            try{
             Updating.renderFrame(timestamp);
+            } catch(e){
+                alert(e);
+            }
             requestAnimationFrame(draw);
         }
 
