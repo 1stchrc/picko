@@ -137,13 +137,15 @@ var Input = function(){
         touchMsgQueue.ptr = 0;
         startedTouches.clear();
         for(var i = 0; i < endedTouches.ptr; i++){
-            touchPool.push(endedTouches[i]);
-            endedTouches[i] = null;
+            touchPool.push(endedTouches.space[i]);
+            endedTouches.space[i] = null;
         }
+        endedTouches.ptr = 0;
         for(var i = 0; i < canceledTouches.ptr; i++){
-            touchPool.push(canceledTouches[i]);
-            canceledTouches[i] = null;
+            touchPool.push(canceledTouches.space[i]);
+            canceledTouches.space[i] = null;
         }
+        canceledTouches.ptr = 0;
         buttonStates.forEach(state => {state.down = 0; state.up = 0});
         mouseButtonStates[0].down = 0;
         mouseButtonStates[1].down = 0;
@@ -261,7 +263,7 @@ var Input = function(){
         proceedTouchStart : function(func){startedTouches.forEach(func)},
         proceedTouchEnd : function(func){endedTouches.forEach(func)},
         proceedTouchCancel : function(func){cancelTouches.forEach(func)},
-        proceedTouchStay : function(func){stayingTouches.forEach(func)},
+        proceedTouchStay : function(func){stayingTouches.forEach(touch => {if(touch != undefined) func(touch)})},
         getWindowResize : null,
         getScreenOrientationChange : null,
     };

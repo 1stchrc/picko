@@ -9,6 +9,7 @@
     </head>
     <body onload="OnLoad()">        
         <canvas id="screen" width="400" height="300"></canvas>
+        <div id="debug"></div>
         <script src="./scripts/framework/Linking.js"></script>
         <script>
         var s2p = 1/0.02;
@@ -114,7 +115,6 @@
                 mch.x = 400 / s2p - mch.width;
             if(mch.y > 300 / s2p - mch.height)
                 mch.y = 300 / s2p - mch.height;
-                Input.proceedTouchStart(touch => ch.x = 3);
         }
         function LateRender(){
             ctx.fillStyle = "#000000";
@@ -127,6 +127,8 @@
             ctx.fillRect(ch.x * s2p ,300 -ch.y  * s2p,ch.width * s2p,-ch.height * s2p);
             ctx.fillStyle = mouseButton.pressed ? "#FF00FF" : "#FFFF00";
             ctx.fillRect(mch.x * s2p ,300 -mch.y  * s2p,mch.width * s2p,-mch.height * s2p);
+            ctx.fillStyle = "#00FF00";
+            Input.proceedTouchStay(touch => {ctx.fillRect(touch.x * 400 - 0.25 * s2p, 300 - touch.y * 300 + 0.25 * s2p, 0.5 * s2p, -0.5 * s2p)});
         }
         function OnLoad(){
             ctx = document.getElementById("screen").getContext("2d");
@@ -135,6 +137,11 @@
             .then(()=>{Global.onscreenCanvas = document.getElementById("screen"); return linkFile("./scripts/framework/RectOverlap.js")})
             .then(() => linkFile("./scripts/framework/Updating.js"))
             .then(()=>linkFile("./scripts/framework/Input.js")).then(()=>{
+                function pd(e){e.preventDefault()}
+                Global.onscreenCanvas.addEventListener("touchstart",pd);
+                Global.onscreenCanvas.addEventListener("touchend",pd);
+                Global.onscreenCanvas.addEventListener("touchcancel",pd);
+                Global.onscreenCanvas.addEventListener("touchmove",pd);
                 gridLayer = new RectOverlap.GridLayer(16,16,2,2);
                 Object = function(x, y, w, h,color = "#FFFFFF"){
                     this.rect = new RectOverlap.RectObj(x,y,x+w,y+h,this);
@@ -164,8 +171,8 @@
         }
         function draw(timestamp){
             try{
-            Updating.renderFrame(timestamp);
-            } catch(e){
+                Updating.renderFrame(timestamp);
+            } catch(e) {
                 alert(e);
             }
             requestAnimationFrame(draw);

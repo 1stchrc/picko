@@ -61,12 +61,12 @@ Misc.ObjPool.prototype = {
         this.space[this.ptr++] = obj;
     },
     pop : function(){
-        if(ptr == 0){
+        if(this.ptr == 0){
             var _obj = new this.constructor();
             return _obj;
         }
-        var obj = this.space[--ptr];
-        this.space[ptr] = null;
+        var obj = this.space[--this.ptr];
+        this.space[this.ptr] = null;
         return obj;
     }
 }
