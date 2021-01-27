@@ -2,40 +2,50 @@
 <html>
     <head>
         <style>
+            body{
+                margin: 0;
+            }
             #screen{
-                cursor : none;
+                width: 100%;
+                height: 100%;
+                position: absolute;
             }
         </style>
     </head>
     <body onload="OnLoad()">        
-        <canvas id="screen" width="400" height="300"></canvas>
-        <div id="debug"></div>
+        <canvas id="screen" width = "1300" height = "600"></canvas>
         <script src="./scripts/framework/Linking.js"></script>
         <script>
-        var s2p = 1/0.02;
         var objList = [];
         var hAxis = 0;
         var vAxis = 0;
-        var ch = {x:0,y:0,width:1,height:1};
-        var mch = {x:0,y:0,width:0.2,height:0.2};
+        var ch = {x:0,y:0,width:6,height:6};
+        var lastChX = 0;
+        var lastChY = 0;
         var ctx;
+        var swidth;
+        var sheight;
         var gridLayer;
         var Object;
-        var runninx = 0.2;
-        var runninObj;
-        var runniny = 0.2;
-        var runninObj2;
-        var runninBack = false;
-        var runninBack2 = false;
         var mousePos;
         var sup = null;
         var sdown = null;
         var mouseButton = null;
+        var oldTime = 0;
+        var newTime = 0;
+        var hsqrt2 = Math.sqrt(2) / 2;
+        var runState = 0;
+        var runTimer = 0;
+        var runhTime = 4000;
+        var runvTime = 2500;
+        var runObj;
         function Update(){
-            up = sup.pressed;
-            down = sdown.pressed;
-            left = Input.getButton("left").pressed;
-            right = Input.getButton("right").pressed;
+            var up = sup.pressed;
+            var down = sdown.pressed;
+            var left = Input.getButton("left").pressed;
+            var right = Input.getButton("right").pressed;
+            lastChX = ch.x;
+            lastChY = ch.y;
             if(up&&down)
                 vAxis = 0;
             else if(up)
@@ -52,110 +62,154 @@
                 hAxis = -1;
             else
                 hAxis = 0;
-            ch.x += hAxis * 0.02 * 4;
-            ch.y += vAxis * 0.02 * 4;
+            if(hAxis != 0 && vAxis != 0){
+                hAxis *= hsqrt2;
+                vAxis *= hsqrt2;
+            }
+            ch.x += hAxis * 0.8;
+            ch.y += vAxis * 0.8;
             if(ch.x < 0)
                 ch.x = 0;
             if(ch.y < 0)
                 ch.y = 0;
-            if(ch.x > 400 / s2p - ch.width)
-                ch.x = 400 / s2p - ch.width;
-            if(ch.y > 300 / s2p - ch.height)
-                ch.y = 300 / s2p - ch.height;
-            if(runninBack){
-                runninx -= 0.02 * 3;
-                if(runninx < 0.2){
-                        runninx = 0.2;
-                        runninBack = false;
-                }
-            }else{
-                runninx += 0.02 * 3;
-                if(runninx > 3){
-                        runninx = 3;
-                        runninBack = true;
-                }
-            }
-            if(runninBack2){
-                runniny -= 0.02 * 3;
-                if(runniny < 0.2){
-                        runniny = 0.2;
-                        runninBack2 = false;
-                    }
-            }else{
-                runniny += 0.02 * 3;
-                if(runniny > 3){
-                        runniny = 3;
-                        runninBack2 = true;
-                    }
-            }
-        
-            
-            gridLayer.updateRect(runninObj.rect,runninx,runninx+1,3.6,4);
-            gridLayer.updateRect(runninObj2.rect,5.6,6.2,runniny,runniny+1.2);
-            
+            if(ch.x > swidth - ch.width)
+                ch.x = swidth - ch.width;
+            if(ch.y > sheight - ch.height)
+                ch.y = sheight - ch.height;
             objList.forEach(obj => {
+                obj.lastX = obj.x;
+                obj.lastY = obj.y;
                 obj.color = "#FFFFFF";
             });
-            gridLayer.overlapRect(ch.x,ch.y, ch.x + ch.width,ch.y + ch.height,rect => {
+            if(runState == 0){
+                if(runTimer > runhTime){
+                    runState = 1;
+                    runObj.moveTo(83, 22);
+                    runTimer = 0;
+                } else {
+                    runObj.moveTo((1 - Math.cos(Math.PI * runTimer / runhTime)) * 70 / 2 + 13, 22);
+                    runTimer += Time.fixedDeltaTime;
+                }
+            }else if(runState == 1){
+                if(runTimer > runvTime){
+                    runState = 2;
+                    runObj.moveTo(83, 58);
+                    runTimer = 0;
+                } else {
+                    runObj.moveTo(83, (1 - Math.cos(Math.PI * runTimer / runvTime)) * 36 / 2 + 22);
+                    runTimer += Time.fixedDeltaTime;
+                }
+            }else if(runState == 2){
+                if(runTimer > runhTime){
+                    runState = 3;
+                    runObj.moveTo(13, 58);
+                    runTimer = 0;
+                } else {
+                    runObj.moveTo(-(1 - Math.cos(Math.PI * runTimer / runhTime)) * 70 / 2 + 83, 58);
+                    runTimer += Time.fixedDeltaTime;
+                }
+            }else if(runState == 3){
+                if(runTimer > runvTime){
+                    runState = 0;
+                    runObj.moveTo(13, 22);
+                    runTimer = 0;
+                } else {
+                    runObj.moveTo(13, -(1 - Math.cos(Math.PI * runTimer / runvTime)) * 36 / 2 + 58);
+                    runTimer += Time.fixedDeltaTime;
+                }
+            }
+            var rchx = Math.round(ch.x);
+            var rchy = Math.round(ch.y);
+            gridLayer.overlapRect(rchx ,rchy , rchx + ch.width - 1, rchy + ch.height - 1,rect => {
                 rect.obj.color = "#FF0000";
             });
-
-            gridLayer.overlapRect(mch.x,mch.y, mch.x + mch.width,mch.y + mch.height,rect => {
-                rect.obj.color = "#FF0000";
-            });
+            oldTime = newTime;
+            newTime = Time.fixedTimestamp;
         }
         function Render(){
-            mch.x = mousePos.x * 400 / s2p - 0.1;
-            mch.y = mousePos.y * 300 / s2p - 0.1;
-            if(mch.x < 0)
-                mch.x = 0;
-            if(mch.y < 0)
-                mch.y = 0;
-            if(mch.x > 400 / s2p - mch.width)
-                mch.x = 400 / s2p - mch.width;
-            if(mch.y > 300 / s2p - mch.height)
-                mch.y = 300 / s2p - mch.height;
+            var rwidth = Global.onscreenCanvas.clientWidth;
+            var rheight = Global.onscreenCanvas.clientHeight;
+            Global.onscreenCanvas.width = rwidth;
+            Global.onscreenCanvas.height = rheight;
+            Global.onscreenCanvasContext.imageSmoothingEnabled = false;
+            Global.onscreenCanvasContext.fillStyle = "#0000FF";
+            Global.onscreenCanvasContext.fillRect(0,0,rwidth,rheight);
+            if(Global.onscreenCanvas.height / Global.onscreenCanvas.width < sheight / swidth){
+                var zoom = rheight / sheight;
+                Rendering.setBlitOptions((rwidth - swidth * zoom) / 2, 0, swidth * zoom, sheight * zoom);
+            }else{
+                var zoom = rwidth / swidth;
+                Rendering.setBlitOptions(0, (rheight - sheight * zoom) / 2, swidth * zoom, sheight * zoom);
+            }
         }
         function LateRender(){
+            
             ctx.fillStyle = "#000000";
-            ctx.fillRect(0,0,400,300);
-            objList.forEach(obj=>{
-                ctx.fillStyle = obj.color;
-                ctx.fillRect(obj.rect.left * s2p, 300 - obj.rect.bottom * s2p, (obj.rect.right - obj.rect.left) * s2p ,(obj.rect.bottom - obj.rect.top) * s2p);
-            });
+            ctx.fillRect(0,0,swidth,sheight);
+            var chx;
+            var chy;
+            if(oldTime < newTime){
+                var lerp = (Time.renderTimestamp - oldTime) / (newTime - oldTime);
+                var lerp2 = 1 - lerp;
+                chx = lastChX * lerp2 + ch.x * lerp;
+                chy = lastChY * lerp2 + ch.y * lerp;
+                objList.forEach(obj=>{
+                    var objx = Math.round(obj.lastX * lerp2 + obj.x * lerp);
+                    var objy = Math.round(obj.lastY * lerp2 + obj.y * lerp);
+                    ctx.fillStyle = obj.color;
+                    ctx.fillRect(objx, objy, obj.width,obj.height);
+                    ctx.fillStyle = "#000000";
+                    ctx.fillRect(objx + 1, objy + 1, obj.width - 2,obj.height - 2);
+                });
+                
+            } else {
+                chx = ch.x;
+                chy = ch.y;
+                
+            }
             ctx.fillStyle = "#00FFFF";
-            ctx.fillRect(ch.x * s2p ,300 -ch.y  * s2p,ch.width * s2p,-ch.height * s2p);
-            ctx.fillStyle = mouseButton.pressed ? "#FF00FF" : "#FFFF00";
-            ctx.fillRect(mch.x * s2p ,300 -mch.y  * s2p,mch.width * s2p,-mch.height * s2p);
-            ctx.fillStyle = "#00FF00";
-            Input.proceedTouchStay(touch => {ctx.fillRect(touch.x * 400 - 0.25 * s2p, 300 - touch.y * 300 + 0.25 * s2p, 0.5 * s2p, -0.5 * s2p)});
+            ctx.fillRect(Math.round(chx),Math.round(chy),ch.width,ch.height);
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(Math.round(chx) + 1,Math.round(chy) + 1,ch.width - 2,ch.height - 2);
         }
         function OnLoad(){
-            ctx = document.getElementById("screen").getContext("2d");
             linkFile("./scripts/framework/Misc.js")
-            .then(()=>linkFile("./scripts/framework/Global.js"))
-            .then(()=>{Global.onscreenCanvas = document.getElementById("screen"); return linkFile("./scripts/framework/RectOverlap.js")})
+            .then(() => linkFile("./scripts/framework/Global.js"))
+            .then(() => {Global.onscreenCanvas = document.getElementById("screen"); Global.onscreenCanvasContext = Global.onscreenCanvas.getContext("2d"); return linkFile("./scripts/framework/RectOverlap.js")})
             .then(() => linkFile("./scripts/framework/Updating.js"))
-            .then(()=>linkFile("./scripts/framework/Input.js")).then(()=>{
+            .then(() => linkFile("./scripts/framework/Rendering.js"))
+            .then(() => linkFile("./scripts/framework/Input.js")).then(()=>{
+                ctx = Rendering.getScreenContext();
+                swidth = Rendering.getScreenWidth();
+                sheight = Rendering.getScreenHeight();
                 function pd(e){e.preventDefault()}
                 Global.onscreenCanvas.addEventListener("touchstart",pd);
                 Global.onscreenCanvas.addEventListener("touchend",pd);
                 Global.onscreenCanvas.addEventListener("touchcancel",pd);
                 Global.onscreenCanvas.addEventListener("touchmove",pd);
-                gridLayer = new RectOverlap.GridLayer(16,16,2,2);
+                gridLayer = new RectOverlap.GridLayer(8,8,16,9);
                 Object = function(x, y, w, h,color = "#FFFFFF"){
-                    this.rect = new RectOverlap.RectObj(x,y,x+w,y+h,this);
+                    this.rect = new RectOverlap.RectObj(x,y,x+w-1,y+h-1,this);
+                    this.x = x;
+                    this.y = y;
+                    this.width = w;
+                    this.height = h;
                     this.color = color;
+                    this.lastX = x;
+                    this.lastY = y;
                     objList.push(this);
-                }
-                gridLayer.addRect(new Object(1.4, 2.4, 0.6, 0.4).rect);
-                gridLayer.addRect(new Object(0.2, 0.8, 2, 0.6).rect);
-                gridLayer.addRect(new Object(2.4, 1.8, 1.6, 1.6).rect);
-                gridLayer.addRect(new Object(4.4, 2.8, 2.4, 0.8).rect);
-                runninObj = new Object(runninx, 1, 3.6, 0.5);
-                runninObj2 = new Object(5.6, 0.6, runniny, 1.2);
-                gridLayer.addRect(runninObj.rect);
-                gridLayer.addRect(runninObj2.rect);
+                    gridLayer.addRect(this.rect);
+                };
+                Object.prototype.moveTo = function(x,y){
+                    this.x = x;
+                    this.y = y;
+                    var rx = Math.round(x);
+                    var ry = Math.round(y);
+                    gridLayer.updateRect(this.rect, rx, rx + this.width - 1, ry,  ry + this.height - 1);
+                };
+                new Object(16,5,31,15);
+                new Object(100,32,15,31);
+                runObj = new Object(13, 22, 10, 10);
                 sup = Input.registerButton("up", "ArrowUp");
                 sdown = Input.registerButton("down", "ArrowDown");
                 Input.registerButton("left", "ArrowLeft");
@@ -174,6 +228,7 @@
                 Updating.renderFrame(timestamp);
             } catch(e) {
                 alert(e);
+                throw e;
             }
             requestAnimationFrame(draw);
         }

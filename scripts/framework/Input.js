@@ -265,7 +265,7 @@ var Input = function(){
         proceedTouchCancel : function(func){cancelTouches.forEach(func)},
         proceedTouchStay : function(func){stayingTouches.forEach(touch => {if(touch != undefined) func(touch)})},
         getWindowResize : null,
-        getScreenOrientationChange : null,
+        getScreenOrientation : null,
     };
 }
 

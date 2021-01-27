@@ -1,6 +1,6 @@
 var Time = {
-    deltaTime : null,
-    getFixedDeltaTime : null,
+    deltaTime : 0,
+    fixedDeltaTime : 20,
     renderTimestamp : 0,
     fixedTimestamp : 0
 };
@@ -24,16 +24,12 @@ var Updating = function(){
     var renderMsgQueue = new Misc.StructArray(Msg);
     var lateRenderRoutines = [];
     var renderRefreshFlag = false;
-    var loopIndex = 0;
 
     var fixedRoutines = [];
-
-    var fixedDeltaTime = 20;
 
     var renderHooks = [];
 
     function fixedUpdate(){
-        Time.fixedTimestamp = loopIndex * fixedDeltaTime;
 
         fixedRoutines.forEach(function(route){route.func();});
     }
@@ -61,18 +57,17 @@ var Updating = function(){
 
             renderRoutines.forEach(function(route){route.func();});
 
-            var expectedLoopIndex = Math.round(timestamp / fixedDeltaTime);
-            var maxLoopIndex = loopIndex + Updating.frameDropThreshold;
+            var maxTime = Time.fixedTimestamp + Updating.frameDropThreshold * Time.fixedDeltaTime;
             if(Updating.fixedUpdatePaused)
-                loopIndex = expectedLoopIndex;
+                Time.fixedTimestamp = maxTime;
             else
-                while(loopIndex < expectedLoopIndex){
-                    if(loopIndex > maxLoopIndex){
-                        loopIndex = expectedLoopIndex;
+                while(Time.fixedTimestamp < timestamp){
+                    if(Time.fixedTimestamp > maxTime){
+                        Time.fixedTimestamp = maxTime;
                         break;
                     }
+                    Time.fixedTimestamp += Time.fixedDeltaTime;
                     fixedUpdate();
-                    loopIndex++;
                 }
 
             lateRenderRoutines.forEach(function(route){route.func();});            
@@ -129,7 +124,5 @@ var Updating = function(){
 
         frameDropThreshold : 5,
     };
-
-    Time.getFixedDeltaTime = function(){return fixedDeltaTime};
 }
 Updating();
