@@ -16,36 +16,114 @@
         <canvas id="screen" width = "1300" height = "600"></canvas>
         <script src="./scripts/framework/linking.js"></script>
         <script>
-        var objList = [];
         var hAxis = 0;
         var vAxis = 0;
-        var ch = {x:0,y:0,width:6,height:6};
-        var lastChX = 0;
-        var lastChY = 0;
+
         var ctx;
         var swidth;
         var sheight;
+
         var gridLayer;
-        var Object;
+
         var mousePos;
         var sup = null;
         var sdown = null;
+        var sleft = null;
+        var sright = null;
         var mouseButton = null;
+
         var oldTime = 0;
         var newTime = 0;
+
+        var gameObject;
+        var character;
+
+
         var hsqrt2 = Math.sqrt(2) / 2;
-        var runState = 0;
-        var runTimer = 0;
-        var runhTime = 4000;
-        var runvTime = 3000;
-        var runObj;
+
+        function Pos(){
+            this.x = 0;
+            this.y = 0;
+        }
+
+        function LastPos(){
+            this.x = 0;
+            this.y = 0;
+        }
+
+        function Scale(){
+            this.x = 0;
+            this.y = 0;
+        }
+
+        function Renderer(){
+            this.color = "#FFFFFF";
+        }
+
+        function AxisMove(){
+            this.speed = 60 * 0.02;
+        }
+
+        var gameObject;
+
+        var lerpRenderSystem;
+
+        var lastUpdateSystem;
+
+        var axisMoveSystem;
+
+        function lerpRender(sp){
+            var lerp = (pickoTime.renderTimestamp - oldTime) / (newTime - oldTime);
+            var exlerp = 1 - lerp;
+            var positions = sp.getComponents(Pos);
+            var lastPositions = sp.getComponents(LastPos);
+            var scales = sp.getComponents(Scale);
+            var renderers = sp.getComponents(Renderer);
+            var count = sp.getEntityCount();
+            for(var i = 0; i < count; i++){
+                ctx.fillStyle = renderers[i].color;
+                var pos = positions[i];
+                var lastPos = lastPositions[i];
+                var scale = scales[i];
+                var renderx = Math.round(pos.x * lerp + lastPos.x * exlerp);
+                var rendery = Math.round(pos.y * lerp + lastPos.y * exlerp);
+                ctx.fillRect(renderx, rendery, scale.x, scale.y);
+                ctx.fillStyle = "#000000";
+                ctx.fillRect(renderx + 1, rendery + 1, scale.x - 2, scale.y - 2);
+            }
+        }
+
+        function lastUpdate(sp){
+            var positions = sp.getComponents(Pos);
+            var lastPositions = sp.getComponents(LastPos);
+            var count = sp.getEntityCount();
+            for(var i = 0; i < count; i++){
+                var lp = lastPositions[i];
+                var p = positions[i];
+                lp.x = p.x;
+                lp.y = p.y;
+            }
+        }
+
+        function axisMove(sp){
+            var positions = sp.getComponents(Pos);
+            var axisMoves = sp.getComponents(AxisMove);
+            var count = sp.getEntityCount();
+            for(var i = 0; i < count; i++){
+                var p = positions[i];
+                var speed = axisMoves[i].speed;
+                p.x += hAxis * speed;
+                p.y += vAxis * speed;
+            }
+        }
+
         function Update(){
+            lastUpdateSystem.invoke();
             var up = sup.pressed;
             var down = sdown.pressed;
-            var left = pickoInput.getButton("left").pressed;
-            var right = pickoInput.getButton("right").pressed;
-            lastChX = ch.x;
-            lastChY = ch.y;
+            var left = sleft.pressed;
+            var right = sright.pressed;
+
             if(up&&down)
                 vAxis = 0;
             else if(up)
@@ -66,63 +144,7 @@
                 hAxis *= hsqrt2;
                 vAxis *= hsqrt2;
             }
-            ch.x += hAxis * 0.8;
-            ch.y += vAxis * 0.8;
-            if(ch.x < 0)
-                ch.x = 0;
-            if(ch.y < 0)
-                ch.y = 0;
-            if(ch.x > swidth - ch.width)
-                ch.x = swidth - ch.width;
-            if(ch.y > sheight - ch.height)
-                ch.y = sheight - ch.height;
-            objList.forEach(obj => {
-                obj.lastX = obj.x;
-                obj.lastY = obj.y;
-                obj.color = "#FFFFFF";
-            });
-            if(runState == 0){
-                if(runTimer > runhTime){
-                    runState = 1;
-                    runObj.moveTo(83, 22);
-                    runTimer = 0;
-                } else {
-                    runObj.moveTo((1 - Math.cos(Math.PI * runTimer / runhTime)) * 70 / 2 + 13, 22);
-                    runTimer += pickoTime.fixedDeltaTime;
-                }
-            }else if(runState == 1){
-                if(runTimer > runvTime){
-                    runState = 2;
-                    runObj.moveTo(83, 58);
-                    runTimer = 0;
-                } else {
-                    runObj.moveTo(83, (1 - Math.cos(Math.PI * runTimer / runvTime)) * 36 / 2 + 22);
-                    runTimer += pickoTime.fixedDeltaTime;
-                }
-            }else if(runState == 2){
-                if(runTimer > runhTime){
-                    runState = 3;
-                    runObj.moveTo(13, 58);
-                    runTimer = 0;
-                } else {
-                    runObj.moveTo(-(1 - Math.cos(Math.PI * runTimer / runhTime)) * 70 / 2 + 83, 58);
-                    runTimer += pickoTime.fixedDeltaTime;
-                }
-            }else if(runState == 3){
-                if(runTimer > runvTime){
-                    runState = 0;
-                    runObj.moveTo(13, 22);
-                    runTimer = 0;
-                } else {
-                    runObj.moveTo(13, -(1 - Math.cos(Math.PI * runTimer / runvTime)) * 36 / 2 + 58);
-                    runTimer += pickoTime.fixedDeltaTime;
-                }
-            }
-            var rchx = Math.round(ch.x);
-            var rchy = Math.round(ch.y);
-            gridLayer.overlapRect(rchx ,rchy , rchx + ch.width - 1, rchy + ch.height - 1,rect => {
-                rect.obj.color = "#FF0000";
-            });
+            axisMoveSystem.invoke();
             oldTime = newTime;
             newTime = pickoTime.fixedTimestamp;
         }
@@ -143,85 +165,63 @@
             }
         }
         function LateRender(){
-            
             ctx.fillStyle = "#000000";
             ctx.fillRect(0,0,swidth,sheight);
-            var chx;
-            var chy;
-            if(oldTime < newTime){
-                var lerp = (pickoTime.renderTimestamp - oldTime) / (newTime - oldTime);
-                var lerp2 = 1 - lerp;
-                chx = lastChX * lerp2 + ch.x * lerp;
-                chy = lastChY * lerp2 + ch.y * lerp;
-                objList.forEach(obj=>{
-                    var objx = Math.round(obj.lastX * lerp2 + obj.x * lerp);
-                    var objy = Math.round(obj.lastY * lerp2 + obj.y * lerp);
-                    ctx.fillStyle = obj.color;
-                    ctx.fillRect(objx, objy, obj.width,obj.height);
-                    ctx.fillStyle = "#000000";
-                    ctx.fillRect(objx + 1, objy + 1, obj.width - 2,obj.height - 2);
-                });
-                
-            } else {
-                chx = ch.x;
-                chy = ch.y;
-                
-            }
-            ctx.fillStyle = "#00FFFF";
-            ctx.fillRect(Math.round(chx),Math.round(chy),ch.width,ch.height);
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(Math.round(chx) + 1,Math.round(chy) + 1,ch.width - 2,ch.height - 2);
+            
+            lerpRenderSystem.invoke();
         }
         function OnLoad(){
-            pickoLinkFile("script", "./scripts/framework/misc.js")
-            .then(() => pickoLinkFile("script", "./scripts/framework/global.js"))
+            pickoLinkFile("./scripts/framework/misc.js")
+            .then(() => pickoLinkFile("./scripts/framework/global.js"))
             .then(() => {
                 pickoGlobal.onscreenCanvas = document.getElementById("screen"); pickoGlobal.onscreenCanvasContext = pickoGlobal.onscreenCanvas.getContext("2d"); 
-                return pickoLinkFile("script", "./scripts/framework/rectoverlap.js");
+                return pickoLinkFile("./scripts/framework/rectoverlap.js");
             })
-            .then(() => pickoLinkFile("script", "./scripts/framework/updating.js"))
-            .then(() => pickoLinkFile("script", "./scripts/framework/blitting.js"))
-            .then(() => pickoLinkFile("script", "./scripts/framework/input.js")).then(()=>{
+            .then(() => pickoLinkFile("./scripts/framework/updating.js"))
+            .then(() => pickoLinkFile("./scripts/framework/blitting.js"))
+            .then(() => pickoLinkFile("./scripts/framework/input.js"))
+            .then(() => pickoLinkFile("./scripts/framework/gamesystem.js"))
+            .then(()=>{
                 ctx = pickoBlitting.getScreenContext();
                 swidth = pickoBlitting.getScreenWidth();
                 sheight = pickoBlitting.getScreenHeight();
+
                 function pd(e){e.preventDefault()}
                 pickoGlobal.onscreenCanvas.addEventListener("touchstart",pd);
                 pickoGlobal.onscreenCanvas.addEventListener("touchend",pd);
                 pickoGlobal.onscreenCanvas.addEventListener("touchcancel",pd);
                 pickoGlobal.onscreenCanvas.addEventListener("touchmove",pd);
+
                 gridLayer = new pickoRectOverlap.GridLayer(8,8,16,9);
-                Object = function(x, y, w, h,color = "#FFFFFF"){
-                    this.rect = new pickoRectOverlap.RectObj(x,y,x+w-1,y+h-1,this);
-                    this.x = x;
-                    this.y = y;
-                    this.width = w;
-                    this.height = h;
-                    this.color = color;
-                    this.lastX = x;
-                    this.lastY = y;
-                    objList.push(this);
-                    gridLayer.addRect(this.rect);
-                };
-                Object.prototype.moveTo = function(x,y){
-                    this.x = x;
-                    this.y = y;
-                    var rx = Math.round(x);
-                    var ry = Math.round(y);
-                    gridLayer.updateRect(this.rect, rx, ry, rx + this.width - 1, ry + this.height - 1);
-                };
-                new Object(16,5,31,15);
-                new Object(100,32,15,31);
-                runObj = new Object(13, 22, 10, 10);
+
                 sup = pickoInput.registerButton("up", "ArrowUp");
                 sdown = pickoInput.registerButton("down", "ArrowDown");
-                pickoInput.registerButton("left", "ArrowLeft");
-                pickoInput.registerButton("right", "ArrowRight");
+                sleft = pickoInput.registerButton("left", "ArrowLeft");
+                sright = pickoInput.registerButton("right", "ArrowRight");
+
                 mousePos = pickoInput.getMousePos();
                 mouseButton = pickoInput.getMouseButton(0);
+
+                gameObject = pickoSystem.createArchetype([Pos,LastPos,Scale,Renderer]);
+                character = pickoSystem.createArchetype([Pos,LastPos,Scale,Renderer,AxisMove]);
+
+                lerpRenderSystem = pickoSystem.createSystemByComponents(lerpRender, [Pos,LastPos,Scale,Renderer]);
+                lastUpdateSystem = pickoSystem.createSystemByComponents(lastUpdate, [Pos,LastPos]);
+                axisMoveSystem = pickoSystem.createSystemByComponents(axisMove, [Pos,LastPos,AxisMove]);
+
+                player = character.createEntity();
+                var scale = player.getComponent(Scale);
+                var renderer = player.getComponent(Renderer);
+
+                scale.x = 6;
+                scale.y = 6;
+
+                renderer.color = "#00FFFF";
+
                 pickoUpdating.startRenderRoutine("rdr",0, Render);
                 pickoUpdating.startLateRenderRoutine("lrdr",0, LateRender);
                 pickoUpdating.startFixedRoutine("upd", 0, Update);
+
                 draw(0);
                 pickoUpdating.fixedUpdatePaused = false;
             });      

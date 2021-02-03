@@ -1,5 +1,5 @@
-function pickoLinkFile(type, filePath){
-    var node = document.createElement(type);
+function pickoLinkFile(filePath){
+    var node = document.createElement("script");
     node.src = filePath;        
     document.body.appendChild(node);
     return new Promise(resolve => 
