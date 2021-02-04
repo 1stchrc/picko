@@ -14,6 +14,19 @@ var pickoMisc = {
         this.constructor = constructor;
         if(constructor.prototype.init == undefined)
             constructor.prototype.init = constructor;
+    },
+    HashMap : function(maxHash, hash, equal, duplicate){
+        this.buckets = new Array(maxHash + 1);
+        this.hash = hash;
+        this.equal = equal;
+        this.duplicate = duplicate;
+        for(var i = 0; i < this.buckets.length; i++){
+            this.buckets[i] = [];
+        }
+    },
+    Pair : function(first, second){
+        this.first = first;
+        this.second = second;
     }
 };
 
@@ -73,5 +86,20 @@ pickoMisc.ObjPool.prototype = {
     reset : function(){
         this.space = [];
         this.ptr = 0;
+    }
+}
+
+pickoMisc.HashMap.prototype = {
+    set : function(key, value){
+        this.buckets[this.hash(key)].push(new pickoMisc.Pair(this.duplicate(key), value));
+    },
+    get : function(key){
+        var that = this;
+        var set = this.buckets[this.hash(key)];
+        for(var i = 0; i < set.length; i++){
+            if(that.equal(set[i].first, key))
+                return set[i].second;
+        }
+        return undefined;
     }
 }

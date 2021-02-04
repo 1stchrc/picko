@@ -1,19 +1,61 @@
 var pickoSystem = function(){
-    var archetypeSpaces = [];
+
     var componentTypes = [];
     var componentPools = []; // The pools of unused components.
+
+    var currentArchetype = [];
+
+    function arrayHash(array){
+        var hash = 0;
+        for(var i = 0; i < array.length; i++){
+            hash += array[i] % 37 + 17;
+        }
+        return hash % 37;
+    }
+
+    function arrayEqual(left, right){
+        var i = 0;
+        if(left.length > right.length){
+            for(; i < right.length; i++){
+                if(left[i] != right[i])
+                    return false;
+            }
+            for(; i < left.length; i++){
+                if(left[i] != 0)
+                return false;
+            }
+            return true;
+        }
+        for(; i < left.length; i++){
+            if(left[i] != right[i])
+                return false;
+        }
+        for(; i < right.length; i++){
+            if(right[i] != 0)
+                return false;
+        }
+        return true;
+    }
+
+    function arrayDupe(array){
+        var dupe = new Array(array.length);
+        for(var i = 0; i < array.length; i++){
+            dupe[i] = array[i];
+        }
+        return dupe;
+    }
+
+    var archetypes = new pickoMisc.HashMap(36, arrayHash, arrayEqual, arrayDupe);
+    var archetypeSpaces = [];
+
+
+
     function ArchetypeSpace(archetype){
         this.archetype = archetype;
         this.entities = new pickoMisc.ObjList();
-        this.components = new Array(archetype.length);
-        for(var i = 0; i < archetype.length; i++){
-            this.components[i] = new pickoMisc.ObjList();
-        }
+        this.components = [];
+        this.componentTypes = [];
         this.typeMap = new Map();
-        var tm = this.typeMap;
-        this.archetype.forEach(function(id, idx){
-            tm.set(componentTypes[id], idx);
-        });
     }
     ArchetypeSpace.prototype = {
         createEntity : function(){
@@ -23,7 +65,7 @@ var pickoSystem = function(){
             this.entities.push(entity);
             entity.archetype = this;
             for(var i = 0; i < this.components.length; i++){
-                this.components[i].push(componentPools[this.archetype[i]].pop());
+                this.components[i].push(componentPools[this.componentTypes[i]].pop());
             }
             return entity;
         },
@@ -41,8 +83,9 @@ var pickoSystem = function(){
     }
 
     Entity.prototype = {
-        getComponent : function(constructor){
-            return this.archetype.components[this.archetype.typeMap.get(constructor)].space[this.index];
+        getComponent : function(id){
+            //console.log(this.archetype);
+            return this.archetype.components[this.archetype.typeMap.get(id)].space[this.index];
         }
     }
 
@@ -72,7 +115,7 @@ var pickoSystem = function(){
                         sp.entities.space[i].index = i;
                     }
                     sp.components.forEach(function(comArray, idx){
-                        componentPools[sp.archetype[idx]].push(comArray.space[i]);
+                        componentPools[sp.componentTypes[idx]].push(comArray.space[i]);
                         comArray.remove(i);
                     });
                 } else {
@@ -82,84 +125,85 @@ var pickoSystem = function(){
         });
     }
 
+    function createArchetype(){
+        var typecount = 0;
+        var asp = new ArchetypeSpace(archetypeSpaces.length);
+        for(var i = 0; i < currentArchetype.length; i++){
+            var cnum = currentArchetype[i];
+            for(var j = 0; j < 32; j++){
+                if((cnum & (1 << j)) != 0){
+                    var type = i * 32 + j;
+                    asp.components.push(new pickoMisc.ObjList());
+                    asp.componentTypes.push(type);
+                    asp.typeMap.set(type, typecount);
+                    typecount++;
+                }
+            }
+        }
+
+        archetypes.set(currentArchetype, asp);
+        archetypeSpaces.push(asp);
+        //console.log(currentArchetype);
+        return asp;
+    }
+
     pickoUpdating.startLateRenderRoutine(Symbol("__system"), -32, lateRender);
 
     pickoSystem = {
-        createArchetype : function(types){ // The parameter is an array of the components' constructors, and the return value is the archetype id.
-            var components = [];
-            for(var i = 0; i < types.length; i++){
-                var index = componentTypes.indexOf(types[i]);
-                if(index == -1){
-                    components[i] = componentTypes.length;
-                    componentTypes.push(types[i]);
-                    componentPools.push(new pickoMisc.ObjPool(types[i]));
-                } else {
-                    components[i] = index;
-                }
+        addComponent : function(id){
+            var digit = id % 32;
+            var index = (id - digit) / 32;
+            currentArchetype[index] = currentArchetype[index] | (1 << digit);
+        },
+
+        removeComponent : function(id){
+            var digit = id % 32;
+            var index = (id - digit) / 32;
+            currentArchetype[index] & (~(1 << digit));
+        },
+
+        clearCurrent : function(){currentArchetype.forEach(function(val){val = 0;});},
+
+        findArchetype : function(){
+            var asp = archetypes.get(currentArchetype);
+            if(asp == undefined){
+                asp = createArchetype();
             }
-            archetypeSpaces.push(new ArchetypeSpace(components));
-            return archetypeSpaces[archetypeSpaces.length - 1];
+            return asp;
         },
-        createEntity : function(archetype){
-            return archetypeSpaces[archetype].createEntity();
-        },
+
         registerComponent : function(constructor){
             var index = componentTypes.indexOf(constructor);
             if(index == -1){
                 componentTypes.push(constructor);
                 componentPools.push(new pickoMisc.ObjPool(constructor));
+                if(currentArchetype.length * 32 < componentTypes.length){
+                    currentArchetype.push(0);
+                }
                 return componentTypes.length - 1;
             }
             return -1;
         },
-        createSystemByComponents : function(func, includes, excludes = []){
+
+        createSystem : function(func, includes = [], excludes = []){
             var system = new System();
             system.func = func;
             archetypeSpaces.forEach(function(sp){
                 for(var i = 0; i < excludes.length; i++){
-                    if(sp.archetype.indexOf(componentTypes.indexOf(excludes[i])) != -1)
+                    if(sp.typeMap.get(excludes[i]) != undefined)
                         return;
                 }
                 for(var i = 0; i < includes.length; i++){
-                    if(sp.archetype.indexOf(componentTypes.indexOf(includes[i])) == -1)
+                    if(sp.typeMap.get(includes[i]) == undefined)
                         return;
                 }
                 system.archetypes.push(sp);
             });
             if(system.archetypes.length > 0)
                 return system;
-            else 
+            else
                 return null;
         },
-        createSystemByComponentIds : function(func, includes, excludes = []){
-            var system = new System();
-            system.func = func;
-            archetypeSpaces.forEach(function(sp){
-                for(var i = 0; i < excludes.length; i++){
-                    if(sp.archetype.indexOf(excludes[i]) != -1)
-                        return;
-                }
-                for(var i = 0; i < includes.length; i++){
-                    if(sp.archetype.indexOf(includes[i]) == -1)
-                        return;
-                }
-                system.archetypes.push(sp);
-            });
-            if(system.archetypes.length > 0)
-                return system;
-            else 
-                return null;
-        },
-        createSystemByArchetypes : function(func, archetypes){
-            if(archetypes.length == 0)
-                return null;
-            var system = new System();
-            system.func = func;
-            archetypes.forEach(function(){
-                system.archetypes.push(sp);
-            });
-            return system;
-        }
     };
 }
 pickoSystem();

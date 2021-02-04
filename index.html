@@ -163,6 +163,10 @@
                 var zoom = rwidth / swidth;
                 pickoBlitting.setBlitOptions(0, (rheight - sheight * zoom) / 2, swidth * zoom, sheight * zoom);
             }
+
+
+            if(sup.down > 0)
+                ob.dead = true;
         }
         function LateRender(){
             ctx.fillStyle = "#000000";
@@ -202,19 +206,40 @@
                 mousePos = pickoInput.getMousePos();
                 mouseButton = pickoInput.getMouseButton(0);
 
-                gameObject = pickoSystem.createArchetype([Pos,LastPos,Scale,Renderer]);
-                character = pickoSystem.createArchetype([Pos,LastPos,Scale,Renderer,AxisMove]);
+                Pos = pickoSystem.registerComponent(Pos);
+                LastPos = pickoSystem.registerComponent(LastPos);
+                Scale = pickoSystem.registerComponent(Scale);
+                Renderer = pickoSystem.registerComponent(Renderer);
+                AxisMove = pickoSystem.registerComponent(AxisMove);
 
-                lerpRenderSystem = pickoSystem.createSystemByComponents(lerpRender, [Pos,LastPos,Scale,Renderer]);
-                lastUpdateSystem = pickoSystem.createSystemByComponents(lastUpdate, [Pos,LastPos]);
-                axisMoveSystem = pickoSystem.createSystemByComponents(axisMove, [Pos,LastPos,AxisMove]);
+                pickoSystem.addComponent(Pos);
+                pickoSystem.addComponent(LastPos);
+                pickoSystem.addComponent(Scale);
+                pickoSystem.addComponent(Renderer);
+                
+                gameObject = pickoSystem.findArchetype();
+                pickoSystem.addComponent(AxisMove);
+                character = pickoSystem.findArchetype();
+                pickoSystem.clearCurrent();
+
+                lerpRenderSystem = pickoSystem.createSystem(lerpRender, [Pos,LastPos,Scale,Renderer]);
+                lastUpdateSystem = pickoSystem.createSystem(lastUpdate, [Pos,LastPos]);
+                axisMoveSystem = pickoSystem.createSystem(axisMove, [Pos,LastPos,AxisMove]);
 
                 player = character.createEntity();
                 var scale = player.getComponent(Scale);
                 var renderer = player.getComponent(Renderer);
 
+                ob = gameObject.createEntity();
+                var oscale = ob.getComponent(Scale);
+                var oren = ob.getComponent(Renderer);
+
                 scale.x = 6;
                 scale.y = 6;
+
+                oscale.x = 20;
+                oscale.y = 30;
+                oren = "#FF0000";
 
                 renderer.color = "#00FFFF";
 
