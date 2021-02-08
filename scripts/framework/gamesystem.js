@@ -8,7 +8,7 @@ var pickoSystem = function(){
     function arrayHash(array){
         var hash = 0;
         for(var i = 0; i < array.length; i++){
-            hash += array[i] % 37 + 17;
+            hash += array[i] % 37;
         }
         return hash % 37;
     }
