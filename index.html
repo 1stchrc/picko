@@ -92,7 +92,7 @@
                 ctx.fillRect(renderx + 1, rendery + 1, scale.x - 2, scale.y - 2);
             }
         }
-
+        
         function lastUpdate(sp){
             var positions = sp.getComponents(Pos);
             var lastPositions = sp.getComponents(LastPos);
@@ -164,9 +164,6 @@
                 pickoBlitting.setBlitOptions(0, (rheight - sheight * zoom) / 2, swidth * zoom, sheight * zoom);
             }
 
-
-            if(sup.down > 0)
-                ob.dead = true;
         }
         function LateRender(){
             ctx.fillStyle = "#000000";
@@ -218,19 +215,21 @@
                 pickoSystem.addComponent(Renderer);
                 
                 gameObject = pickoSystem.findArchetype();
-                pickoSystem.addComponent(AxisMove);
-                character = pickoSystem.findArchetype();
-                pickoSystem.clearCurrent();
 
                 lerpRenderSystem = pickoSystem.createSystem(lerpRender, [Pos,LastPos,Scale,Renderer]);
                 lastUpdateSystem = pickoSystem.createSystem(lastUpdate, [Pos,LastPos]);
                 axisMoveSystem = pickoSystem.createSystem(axisMove, [Pos,LastPos,AxisMove]);
+                
+                pickoSystem.addComponent(AxisMove);
+                character = pickoSystem.findArchetype();
+                pickoSystem.clearCurrent();
 
                 player = character.createEntity();
                 var scale = player.getComponent(Scale);
                 var renderer = player.getComponent(Renderer);
 
                 ob = gameObject.createEntity();
+                obver = ob.version;
                 var oscale = ob.getComponent(Scale);
                 var oren = ob.getComponent(Renderer);
 

@@ -12,8 +12,6 @@ var pickoMisc = {
         this.space = [];
         this.ptr = 0;
         this.constructor = constructor;
-        if(constructor.prototype.init == undefined)
-            constructor.prototype.init = constructor;
     },
     HashMap : function(maxHash, hash, equal, duplicate){
         this.buckets = new Array(maxHash + 1);
@@ -66,12 +64,12 @@ pickoMisc.ObjList.prototype = {
         for(var i = 0; i < this.ptr; i++){
             this.space[i] = null;
         }
+        this.ptr = 0;
     }
 }
 
 pickoMisc.ObjPool.prototype = {
     push : function(obj){
-        obj.init();
         this.space[this.ptr++] = obj;
     },
     pop : function(){
