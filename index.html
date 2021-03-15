@@ -14,7 +14,7 @@
     </head>
     <body onload="OnLoad()">        
         <canvas id="screen" width = "1300" height = "600"></canvas>
-        <script src="./scripts/framework/linking.js"></script>
+        <script src="./scripts/linking/linking.js"></script>
         <script>
         var hAxis = 0;
         var vAxis = 0;
@@ -172,17 +172,10 @@
             lerpRenderSystem.invoke();
         }
         function OnLoad(){
-            pickoLinkFile("./scripts/framework/misc.js")
-            .then(() => pickoLinkFile("./scripts/framework/global.js"))
-            .then(() => {
-                pickoGlobal.onscreenCanvas = document.getElementById("screen"); pickoGlobal.onscreenCanvasContext = pickoGlobal.onscreenCanvas.getContext("2d"); 
-                return pickoLinkFile("./scripts/framework/rectoverlap.js");
-            })
-            .then(() => pickoLinkFile("./scripts/framework/updating.js"))
-            .then(() => pickoLinkFile("./scripts/framework/blitting.js"))
-            .then(() => pickoLinkFile("./scripts/framework/input.js"))
-            .then(() => pickoLinkFile("./scripts/framework/gamesystem.js"))
+            pickoLinking.link("./scripts/linking/framework.js")
             .then(()=>{
+                pickoGlobal.onscreenCanvas = document.getElementById("screen");
+                pickoGlobal.onscreenCanvasContext = pickoGlobal.onscreenCanvas.getContext("2d");
                 ctx = pickoBlitting.getScreenContext();
                 swidth = pickoBlitting.getScreenWidth();
                 sheight = pickoBlitting.getScreenHeight();
@@ -193,7 +186,7 @@
                 pickoGlobal.onscreenCanvas.addEventListener("touchcancel",pd);
                 pickoGlobal.onscreenCanvas.addEventListener("touchmove",pd);
 
-                gridLayer = new pickoRectOverlap.GridLayer(8,8,16,9);
+                //gridLayer = new pickoRectOverlap.GridLayer(8,8,16,9);
 
                 sup = pickoInput.registerButton("up", "ArrowUp");
                 sdown = pickoInput.registerButton("down", "ArrowDown");

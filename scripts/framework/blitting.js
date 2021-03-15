@@ -6,8 +6,8 @@ var pickoBlitting = function(){
     screenCtx.setTransform(1,0,0,-1,0,renderingCanvas.height);
     var desX = 0;
     var desY = 0;
-    var desWidth = pickoGlobal.onscreenCanvas.width;
-    var desHeight = pickoGlobal.onscreenCanvas.height;
+    var desWidth = 0;
+    var desHeight = 0;
     var imgSmooth = false;
     function lateRender(){
         pickoGlobal.onscreenCanvasContext.drawImage(renderingCanvas,desX,desY,desWidth,desHeight);
