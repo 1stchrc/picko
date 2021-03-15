@@ -67,7 +67,6 @@ var pickoSystem = function(){
         createEntity : function(){
             var entity = entityPool.pop();
             entity.index = this.entities.ptr;
-            entity.dead = false;
             this.entities.push(entity);
             entity.archetype = this;
             for(var i = 0; i < this.components.length; i++){
